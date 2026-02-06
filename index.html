@@ -1,174 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alma Bela - Loja Premium</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4"></script>
-    <script src="https://upload-widget.cloudinary.com/latest/sources/index.js"></script>
-</head>
-<body unresolved>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <a href="#" class="logo" id="logoLink" onclick="switchView('store'); return false;">
-                    <div class="logo-text">
-                        <h1>Alma Bela</h1>
-                        <p>Loja Premium</p>
-                    </div>
-                </a>
-
-                <nav class="nav">
-                    <a href="#colecao">Coleção</a>
-                    <a href="#sobre">Sobre</a>
-                    <a href="#contato">Contato</a>
-                </nav>
-
-                <div class="header-right">
-                    <button class="cart-btn" id="cartBtn">
-                        Carrinho
-                        <span class="cart-count" id="cartCount">0</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- LOJA -->
-        <div class="store-view active" id="storeView">
-            <div class="hero">
-                <h1>Coleção Premium</h1>
-                <p>Elegância e Conforto em Cada Peça</p>
-            </div>
-            <div class="products-grid" id="productsGrid">
-                <p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Carregando produtos...</p>
-            </div>
-        </div>
-
-        <!-- ADMIN -->
-        <div class="admin-panel" id="adminPanel">
-            <div class="admin-header">
-                <h2>Painel de Administração</h2>
-                <p>Gerencie seus produtos aqui</p>
-            </div>
-
-            <div id="adminMessage"></div>
-
-            <button class="btn btn-primary" style="margin-bottom: 24px;" onclick="openProductModal()">
-                Novo Produto
-            </button>
-
-            <div id="adminContent">
-                <div class="loading">
-                    <div class="spinner"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- LOGIN MODAL -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Acesso Administrativo</h2>
-                <button class="close-btn" onclick="closeLoginModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form onsubmit="login(event)">
-                    <div class="form-group">
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Senha</label>
-                        <input type="password" id="loginPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        Entrar
-                    </button>
-                </form>
-            </div>
-        </div>
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alma Bela - Loja Premium</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4"></script>
+  <script src="https://upload-widget.cloudinary.com/latest/sources/index.js"></script>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body unresolved>
+  <header>
+   <div class="container">
+    <div class="header-content"><a href="#" class="logo" id="logoLink" onclick="switchView('store'); return false;">
+      <div class="logo-text">
+       <h1>Alma Bela</h1>
+       <p>Loja Premium</p>
+      </div></a>
+     <nav class="nav" id="navMenu"><a href="#colecao">Coleção</a> <a href="#sobre">Sobre</a> <a href="#contato">Contato</a>
+     </nav>
+     <div class="header-right"><button class="cart-btn" id="cartBtn"> <span class="cart-icon">🛍️</span> <span class="cart-label">Carrinho</span> <span class="cart-count" id="cartCount">0</span> </button> <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()"> <span></span> <span></span> <span></span> </button>
+     </div>
     </div>
-
-    <!-- PRODUTO MODAL -->
-    <div class="modal" id="productModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="productModalTitle">Novo Produto</h2>
-                <button class="close-btn" onclick="closeProductModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form onsubmit="saveProduct(event)">
-                    <div class="form-group">
-                        <label for="productName">Nome do Produto</label>
-                        <input type="text" id="productName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productCategory">Categoria</label>
-                        <select id="productCategory" required>
-                            <option value="">Selecione uma categoria</option>
-                            <option value="Lingerie">Lingerie</option>
-                            <option value="Gel">Gel</option>
-                            <option value="Brinquedos">Brinquedos</option>
-                            <option value="Acessórios">Acessórios</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="productPrice">Preço (R$)</label>
-                        <input type="number" id="productPrice" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Upload de Imagem</label>
-                        <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                            <div class="upload-icon">📸</div>
-                            <div class="upload-text">Clique para selecionar imagem</div>
-                            <div class="upload-hint">ou arraste a imagem aqui</div>
-                        </div>
-                        <input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="handleImageSelect(event)">
-                        <img id="imagePreview" class="image-preview" alt="Preview">
-                        <input type="hidden" id="productImage" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productColors">Cores (separadas por vírgula)</label>
-                        <input type="text" id="productColors" placeholder="Rosê,Preto,Branco">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn">
-                        Salvar Produto
-                    </button>
-                </form>
-            </div>
-        </div>
+   </div>
+  </header>
+  <main class="container"><!-- LOJA -->
+   <div class="store-view active" id="storeView">
+    <div class="hero">
+     <h1>Coleção Premium</h1>
+     <p>Elegância e Conforto em Cada Peça</p>
     </div>
-
-    <!-- CARRINHO MODAL -->
-    <div class="modal" id="cartModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Seu Carrinho</h2>
-                <button class="close-btn" onclick="closeCartModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="cart-items-list" id="cartItemsList">
-                    <div class="loading">Carrinho vazio</div>
-                </div>
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <span class="total-value" id="cartTotal">R$ 0,00</span>
-                </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="checkout()">
-                    Enviar Pedido via WhatsApp
-                </button>
-            </div>
-        </div>
+    <div class="products-grid" id="productsGrid">
+     <p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Carregando produtos...</p>
     </div>
-
-    <script src="config.js"></script>
-    <script src="app.js"></script>
-    <script src="products.js"></script>
-</body>
+   </div><!-- ADMIN -->
+   <div class="admin-panel" id="adminPanel">
+    <div class="admin-header">
+     <h2>Painel de Administração</h2>
+     <p>Gerencie seus produtos aqui</p>
+    </div>
+    <div id="adminMessage"></div><button class="btn btn-primary" style="margin-bottom: 24px;" onclick="openProductModal()"> Novo Produto </button>
+    <div id="adminContent">
+     <div class="loading">
+      <div class="spinner"></div>
+     </div>
+    </div>
+   </div>
+  </main><!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title">Acesso Administrativo</h2><button class="close-btn" onclick="closeLoginModal()">×</button>
+    </div>
+    <div class="modal-body">
+     <form onsubmit="login(event)">
+      <div class="form-group"><label for="loginEmail">Email</label> <input type="email" id="loginEmail" required>
+      </div>
+      <div class="form-group"><label for="loginPassword">Senha</label> <input type="password" id="loginPassword" required>
+      </div><button type="submit" class="btn btn-primary" style="width: 100%;"> Entrar </button>
+     </form>
+    </div>
+   </div>
+  </div><!-- PRODUTO MODAL -->
+  <div class="modal" id="productModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title" id="productModalTitle">Novo Produto</h2><button class="close-btn" onclick="closeProductModal()">×</button>
+    </div>
+    <div class="modal-body">
+     <form onsubmit="saveProduct(event)">
+      <div class="form-group"><label for="productName">Nome do Produto</label> <input type="text" id="productName" required>
+      </div>
+      <div class="form-group"><label for="productCategory">Categoria</label> <select id="productCategory" required> <option value="">Selecione uma categoria</option> <option value="Lingerie">Lingerie</option> <option value="Gel">Gel</option> <option value="Brinquedos">Brinquedos</option> <option value="Acessórios">Acessórios</option> </select>
+      </div>
+      <div class="form-group"><label for="productPrice">Preço (R$)</label> <input type="number" id="productPrice" step="0.01" required>
+      </div>
+      <div class="form-group"><label>Upload de Imagem</label>
+       <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">
+         📸
+        </div>
+        <div class="upload-text">
+         Clique para selecionar imagem
+        </div>
+        <div class="upload-hint">
+         ou arraste a imagem aqui
+        </div>
+       </div><input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="handleImageSelect(event)"> <img id="imagePreview" class="image-preview" alt="Preview"> <input type="hidden" id="productImage" required>
+      </div>
+      <div class="form-group"><label for="productColors">Cores (separadas por vírgula)</label> <input type="text" id="productColors" placeholder="Rosê,Preto,Branco">
+      </div><button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn"> Salvar Produto </button>
+     </form>
+    </div>
+   </div>
+  </div><!-- CARRINHO MODAL -->
+  <div class="modal" id="cartModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title">Seu Carrinho</h2><button class="close-btn" onclick="closeCartModal()">×</button>
+    </div>
+    <div class="modal-body">
+     <div class="cart-items-list" id="cartItemsList">
+      <div class="loading">
+       Carrinho vazio
+      </div>
+     </div>
+    </div>
+    <div class="cart-footer">
+     <div class="cart-total"><span>Total:</span> <span class="total-value" id="cartTotal">R$ 0,00</span>
+     </div><button class="btn btn-primary" style="width: 100%;" onclick="checkout()"> Enviar Pedido via WhatsApp </button>
+    </div>
+   </div>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="products.js"></script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c9e8777e7d264d3',t:'MTc3MDQyMTYxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

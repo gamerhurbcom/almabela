@@ -1,8 +1,3 @@
-Não! 😅 Está TUDO JUNTO em um arquivo HTML. Deixa eu separar nos 4 arquivos que você pediu + logo PNG!
-
-📁 4 Arquivos Separados:
-1️⃣ index.html
-2️⃣ styles.css
 * {
     margin: 0;
     padding: 0;
@@ -11,11 +6,13 @@ Não! 😅 Está TUDO JUNTO em um arquivo HTML. Deixa eu separar nos 4 arquivos 
 
 body {
     box-sizing: border-box;
+    font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+    background-color: #faf7f4;
+    color: #1a1a1a;
 }
 
 :root {
     --primary: #c9a17a;
-    --primary-dark: #a68567;
     --accent: #d4927d;
     --bg-light: #faf7f4;
     --text-dark: #1a1a1a;
@@ -27,13 +24,6 @@ body {
 html, body {
     height: 100%;
     width: 100%;
-    font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
-    background-color: var(--bg-light);
-    color: var(--text-dark);
-}
-
-body[unresolved] {
-    opacity: 0;
 }
 
 .container {
@@ -75,7 +65,7 @@ header {
 
 .logo-img {
     height: 40px;
-    width: auto;
+    width: 40px;
 }
 
 .logo-text h1 {
@@ -103,26 +93,10 @@ header {
     font-weight: 500;
     cursor: pointer;
     transition: color 0.3s;
-    position: relative;
 }
 
 .nav a:hover {
     color: var(--primary);
-}
-
-.nav a::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: var(--primary);
-    transition: width 0.3s;
-}
-
-.nav a:hover::after {
-    width: 100%;
 }
 
 .header-right {
@@ -174,13 +148,6 @@ header {
     padding: 8px;
 }
 
-.menu-toggle span {
-    width: 24px;
-    height: 2px;
-    background: var(--text-dark);
-    transition: all 0.3s;
-}
-
 main {
     padding: 40px 0;
     min-height: calc(100% - 60px);
@@ -197,18 +164,6 @@ main {
 .hero {
     text-align: center;
     margin-bottom: 50px;
-    animation: fadeInDown 0.8s ease;
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .hero h1 {
@@ -235,21 +190,6 @@ main {
     border: 1px solid var(--border);
     transition: all 0.4s;
     cursor: pointer;
-    animation: fadeIn 0.6s ease forwards;
-    opacity: 0;
-}
-
-.product-card:nth-child(1) { animation-delay: 0.1s; }
-.product-card:nth-child(2) { animation-delay: 0.2s; }
-.product-card:nth-child(3) { animation-delay: 0.3s; }
-.product-card:nth-child(4) { animation-delay: 0.4s; }
-.product-card:nth-child(5) { animation-delay: 0.5s; }
-.product-card:nth-child(6) { animation-delay: 0.6s; }
-
-@keyframes fadeIn {
-    to {
-        opacity: 1;
-    }
 }
 
 .product-card:hover {
@@ -318,7 +258,6 @@ main {
 .add-to-cart:hover {
     background: var(--primary);
     color: white;
-    transform: translateY(-2px);
 }
 
 .modal {
@@ -333,13 +272,7 @@ main {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeInModal 0.3s ease;
     overflow-y: auto;
-}
-
-@keyframes fadeInModal {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 .modal.active {
@@ -352,19 +285,7 @@ main {
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    animation: slideUp 0.4s ease;
     border-radius: 8px;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .modal-header {
@@ -392,9 +313,6 @@ main {
     padding: 0;
     width: 30px;
     height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .close-btn:hover {
@@ -426,7 +344,6 @@ main {
     background: var(--light-hover);
     font-size: 14px;
     font-family: inherit;
-    transition: border-color 0.3s ease;
 }
 
 .form-group input:focus,
@@ -434,11 +351,6 @@ main {
 .form-group select:focus {
     outline: none;
     border-color: var(--primary);
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 80px;
 }
 
 .image-preview {
@@ -530,11 +442,6 @@ main {
     margin-bottom: 16px;
 }
 
-.total-value {
-    color: var(--accent);
-    font-size: 17px;
-}
-
 .message {
     padding: 12px;
     border-radius: 4px;
@@ -555,18 +462,11 @@ main {
     border-left-color: #dc3545;
 }
 
-.message.warning {
-    background: #fff3cd;
-    color: #856404;
-    border-left-color: #ffc107;
-}
-
 .admin-header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     color: white;
     padding: 24px;
     margin: -40px -20px 30px -20px;
-    border-radius: 0;
 }
 
 .admin-header h2 {
@@ -574,12 +474,6 @@ main {
     font-weight: 400;
     margin-bottom: 6px;
     letter-spacing: 1px;
-}
-
-.admin-header p {
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    opacity: 0.9;
 }
 
 .products-table {
@@ -597,18 +491,12 @@ main {
     text-align: left;
     font-weight: 600;
     font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
     border-bottom: 1px solid var(--border);
 }
 
 .products-table td {
     padding: 12px;
     border-bottom: 1px solid var(--border);
-}
-
-.products-table tr:hover {
-    background: var(--light-hover);
 }
 
 .action-btns {
@@ -625,8 +513,6 @@ main {
     cursor: pointer;
     text-transform: uppercase;
     font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: all 0.2s ease;
 }
 
 .btn-edit {
@@ -686,11 +572,6 @@ main {
     background: var(--light-hover);
 }
 
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 .security-warning {
     background: #fff3cd;
     border: 1px solid #ffc107;
@@ -714,7 +595,6 @@ main {
         gap: 12px;
         border-top: 1px solid var(--border);
         z-index: 49;
-        overflow-y: auto;
     }
 
     .nav.active {
@@ -728,39 +608,5 @@ main {
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 12px;
-    }
-
-    .hero h1 {
-        font-size: 24px;
-    }
-
-    .hero p {
-        font-size: 13px;
-    }
-
-    .page-section {
-        padding: 20px;
-    }
-
-    .page-section h2 {
-        font-size: 20px;
-    }
-
-    .modal-content {
-        max-height: 85vh;
-    }
-}
-
-@media (max-width: 480px) {
-    .logo-text h1 {
-        font-size: 14px;
-    }
-
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    }
-
-    .hero h1 {
-        font-size: 20px;
     }
 }

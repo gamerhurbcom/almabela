@@ -687,3 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateBadge();
   listenProdutos();
 });
+
+const fy = document.getElementById("footerYear");
+if (fy) fy.textContent = new Date().getFullYear();

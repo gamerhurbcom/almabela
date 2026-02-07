@@ -1,107 +1,122 @@
-// -------------------- PRODUCTS (storage) --------------------
-function loadProducts() {
-  const saved = localStorage.getItem(CONFIG.STORAGE_PRODUCTS);
+// -------------------- PRODUTOS (storage) --------------------
+function carregarProdutos() {
+  const saved = localStorage.getItem(CONFIG.STORAGE_PRODUTOS);
   if (saved) return JSON.parse(saved);
 
-  localStorage.setItem(CONFIG.STORAGE_PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
+  // seed automático pra sempre aparecer produto
+  localStorage.setItem(CONFIG.STORAGE_PRODUTOS, JSON.stringify(DEFAULT_PRODUCTS));
   return DEFAULT_PRODUCTS;
 }
 
-function saveProducts(products) {
-  localStorage.setItem(CONFIG.STORAGE_PRODUCTS, JSON.stringify(products));
+function salvarProdutos(produtos) {
+  localStorage.setItem(CONFIG.STORAGE_PRODUTOS, JSON.stringify(produtos));
 }
 
-// -------------------- CART (storage) --------------------
-let cart = JSON.parse(localStorage.getItem(CONFIG.STORAGE_CART)) || [];
-let products = loadProducts();
-let adminLogged = localStorage.getItem("almabela_admin") === "1";
+// -------------------- CARRINHO --------------------
+let carrinho = JSON.parse(localStorage.getItem(CONFIG.STORAGE_CARRINHO)) || [];
+let produtos = carregarProdutos();
+let adminLogado = localStorage.getItem(CONFIG.STORAGE_ADMIN) === "1";
+
+// -------------------- MENU MOBILE --------------------
+function toggleMenu() {
+  const nav = document.getElementById("navMenu");
+  nav.classList.toggle("open");
+}
+
+// fecha menu quando clica em algum link
+function fecharMenu() {
+  const nav = document.getElementById("navMenu");
+  nav.classList.remove("open");
+}
 
 // -------------------- VIEW --------------------
-function showView(name, ev) {
+function showView(nome, ev) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.getElementById(name).classList.add("active");
+  document.getElementById(nome).classList.add("active");
 
   document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
-  if (ev && ev.target) ev.target.classList.add("active");
+  if (ev && ev.target && ev.target.classList.contains("nav-link")) ev.target.classList.add("active");
 
-  if (name === "collection") renderProducts();
-  if (name === "admin") renderAdmin();
+  fecharMenu();
+
+  if (nome === "colecao") renderizarProdutos();
+  if (nome === "admin") renderizarAdmin();
 }
 
-// -------------------- RENDER PRODUCTS --------------------
-function renderProducts() {
+// -------------------- RENDER PRODUTOS --------------------
+function renderizarProdutos() {
   const grid = document.getElementById("grid");
-  products = loadProducts();
+  produtos = carregarProdutos();
 
-  if (!products || products.length === 0) {
-    grid.innerHTML = `<p style="text-align:center;color:#777;">No products available</p>`;
+  if (!produtos || produtos.length === 0) {
+    grid.innerHTML = `<p style="text-align:center;color:#777;">Nenhum produto cadastrado</p>`;
     return;
   }
 
-  grid.innerHTML = products.map(p => `
+  grid.innerHTML = produtos.map(p => `
     <div class="product-card">
-      <img src="${p.imageUrl}" alt="${escapeHtml(p.name)}" class="product-image">
+      <img src="${p.imagemUrl}" alt="${escapeHtml(p.nome)}" class="product-image">
       <div class="product-info">
-        <div class="product-tag">${escapeHtml(p.category || "Lingerie")}</div>
-        <div class="product-name">${escapeHtml(p.name)}</div>
-        <div class="product-price">R$ ${Number(p.price).toFixed(2)}</div>
-        <button class="btn-add" onclick="addCart(${p.id})">+ Add</button>
+        <div class="product-tag">${escapeHtml(p.categoria || "Lingerie")}</div>
+        <div class="product-name">${escapeHtml(p.nome)}</div>
+        <div class="product-price">R$ ${Number(p.preco).toFixed(2)}</div>
+        <button class="btn-add" onclick="adicionarAoCarrinho(${p.id})">+ Adicionar</button>
       </div>
     </div>
   `).join("");
 }
 
-// -------------------- CART --------------------
-function addCart(id) {
-  const p = products.find(x => x.id === id);
+// -------------------- CARRINHO --------------------
+function adicionarAoCarrinho(id) {
+  const p = produtos.find(x => x.id === id);
   if (!p) return;
 
-  const item = cart.find(x => x.id === id);
-  if (item) item.qty++;
-  else cart.push({ id: p.id, name: p.name, price: Number(p.price), imageUrl: p.imageUrl, qty: 1 });
+  const item = carrinho.find(x => x.id === id);
+  if (item) item.qtd++;
+  else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco), imagemUrl: p.imagemUrl, qtd: 1 });
 
-  saveCart();
+  salvarCarrinho();
   openCart();
 }
 
-function saveCart() {
-  localStorage.setItem(CONFIG.STORAGE_CART, JSON.stringify(cart));
-  updateBadge();
+function salvarCarrinho() {
+  localStorage.setItem(CONFIG.STORAGE_CARRINHO, JSON.stringify(carrinho));
+  atualizarBadge();
 }
 
-function updateBadge() {
+function atualizarBadge() {
   const badge = document.getElementById("badge");
-  if (badge) badge.textContent = cart.reduce((s, x) => s + x.qty, 0);
+  if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
 }
 
 function openCart() {
-  renderCart();
+  renderizarCarrinho();
   openModal("cartModal");
 }
 
-function renderCart() {
+function renderizarCarrinho() {
   const list = document.getElementById("cartList");
 
-  if (!cart.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><p>Your cart is empty</p></div>`;
+  if (!carrinho.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><p>Seu carrinho está vazio</p></div>`;
     return;
   }
 
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const total = carrinho.reduce((s, x) => s + x.preco * x.qtd, 0);
 
   list.innerHTML = `
     <div class="cart-items">
-      ${cart.map((x, i) => `
+      ${carrinho.map((x, i) => `
         <div class="cart-item">
-          <img src="${x.imageUrl}" class="cart-img" alt="">
+          <img src="${x.imagemUrl}" class="cart-img" alt="">
           <div class="cart-details">
-            <div class="cart-name">${escapeHtml(x.name)}</div>
-            <div class="cart-price">R$ ${x.price.toFixed(2)}</div>
+            <div class="cart-name">${escapeHtml(x.nome)}</div>
+            <div class="cart-price">R$ ${x.preco.toFixed(2)}</div>
             <div class="qty-control">
-              <button class="qty-btn" onclick="updateQty(${i}, -1)">−</button>
-              <span class="qty-val">${x.qty}</span>
-              <button class="qty-btn" onclick="updateQty(${i}, 1)">+</button>
-              <button class="remove-btn" onclick="removeCart(${i})">Remove</button>
+              <button class="qty-btn" onclick="mudarQtd(${i}, -1)">−</button>
+              <span class="qty-val">${x.qtd}</span>
+              <button class="qty-btn" onclick="mudarQtd(${i}, 1)">+</button>
+              <button class="remove-btn" onclick="removerItem(${i})">Remover</button>
             </div>
           </div>
         </div>
@@ -110,96 +125,95 @@ function renderCart() {
 
     <div class="cart-summary">
       <div class="summary-line"><span>Subtotal:</span><span class="summary-val">R$ ${total.toFixed(2)}</span></div>
-      <div class="summary-line"><span>Shipping:</span><span class="summary-val">To be arranged</span></div>
+      <div class="summary-line"><span>Frete:</span><span class="summary-val">A combinar</span></div>
       <div class="summary-line total"><span>Total:</span><span class="summary-val">R$ ${total.toFixed(2)}</span></div>
     </div>
   `;
 }
 
-function updateQty(idx, change) {
-  cart[idx].qty += change;
-  if (cart[idx].qty <= 0) cart.splice(idx, 1);
-  saveCart();
-  renderCart();
+function mudarQtd(idx, change) {
+  carrinho[idx].qtd += change;
+  if (carrinho[idx].qtd <= 0) carrinho.splice(idx, 1);
+  salvarCarrinho();
+  renderizarCarrinho();
 }
 
-function removeCart(idx) {
-  cart.splice(idx, 1);
-  saveCart();
-  renderCart();
+function removerItem(idx) {
+  carrinho.splice(idx, 1);
+  salvarCarrinho();
+  renderizarCarrinho();
 }
 
-function doCheckout() {
-  if (!cart.length) return;
+function finalizarWhatsApp() {
+  if (!carrinho.length) return;
 
-  let msg = `🛍️ Order - ${CONFIG.STORE_NAME}\n\n`;
-  cart.forEach((x, i) => {
-    msg += `${i + 1}. ${x.name}\nR$ ${x.price.toFixed(2)} x ${x.qty} = R$ ${(x.price * x.qty).toFixed(2)}\n\n`;
+  let msg = `🛍️ Pedido - ${CONFIG.NOME_LOJA}\n\n`;
+  carrinho.forEach((x, i) => {
+    msg += `${i + 1}. ${x.nome}\nR$ ${x.preco.toFixed(2)} x ${x.qtd} = R$ ${(x.preco * x.qtd).toFixed(2)}\n\n`;
   });
 
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
-  msg += `💰 Total: R$ ${total.toFixed(2)}\n\n✨ Thank you!`;
+  const total = carrinho.reduce((s, x) => s + x.preco * x.qtd, 0);
+  msg += `💰 Total: R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
 
   window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
-// -------------------- MODALS --------------------
+// -------------------- MODAIS --------------------
 function openModal(id) {
   document.getElementById(id).classList.add("active");
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove("active");
 }
-
 document.addEventListener("click", e => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
-// -------------------- ADMIN --------------------
+// -------------------- ADMIN (ESCONDIDO) --------------------
 function openLogin() {
   const msg = document.getElementById("loginMsg");
   if (msg) msg.className = "msg";
   openModal("loginModal");
 }
 
-function doLogin() {
+function adminLogin() {
   const email = (document.getElementById("emailInput").value || "").trim();
-  const pass = (document.getElementById("passInput").value || "").trim();
+  const senha = (document.getElementById("passInput").value || "").trim();
   const msg = document.getElementById("loginMsg");
 
-  const ok = (email === CONFIG.ADMIN_EMAIL && pass === CONFIG.ADMIN_PASS);
+  const ok = (email === CONFIG.ADMIN_EMAIL && senha === CONFIG.ADMIN_SENHA);
 
   if (ok) {
-    adminLogged = true;
-    localStorage.setItem("almabela_admin", "1");
+    adminLogado = true;
+    localStorage.setItem(CONFIG.STORAGE_ADMIN, "1");
     closeModal("loginModal");
-    renderAdmin();
-    showLoginMsg("✅ Logged in!", "success");
+    renderizarAdmin();
+    mostrarMsg("✅ Logado com sucesso!", "success");
   } else {
-    showLoginMsg("❌ Invalid credentials", "error");
+    mostrarMsg("❌ Login inválido", "error");
   }
 
-  function showLoginMsg(text, type) {
+  function mostrarMsg(texto, tipo) {
     if (!msg) return;
-    msg.className = `msg show ${type}`;
-    msg.textContent = text;
+    msg.className = `msg show ${tipo}`;
+    msg.textContent = texto;
     setTimeout(() => msg.classList.remove("show"), 2500);
   }
 }
 
-function adminLogout() {
-  adminLogged = false;
-  localStorage.removeItem("almabela_admin");
-  renderAdmin();
+function adminSair() {
+  adminLogado = false;
+  localStorage.removeItem(CONFIG.STORAGE_ADMIN);
+  renderizarAdmin();
 }
 
-function renderAdmin() {
+function renderizarAdmin() {
   const locked = document.getElementById("adminLocked");
   const panel = document.getElementById("adminPanel");
   const list = document.getElementById("adminList");
   if (!locked || !panel || !list) return;
 
-  if (!adminLogged) {
+  if (!adminLogado) {
     locked.style.display = "block";
     panel.style.display = "none";
     return;
@@ -208,83 +222,70 @@ function renderAdmin() {
   locked.style.display = "none";
   panel.style.display = "block";
 
-  products = loadProducts();
+  produtos = carregarProdutos();
 
-  list.innerHTML = products.map(p => `
+  list.innerHTML = produtos.map(p => `
     <div class="admin-item">
       <div>
-        <strong>${escapeHtml(p.name)}</strong><br/>
-        <small>${escapeHtml(p.category || "Lingerie")} • R$ ${Number(p.price).toFixed(2)}</small>
+        <strong>${escapeHtml(p.nome)}</strong><br/>
+        <small>${escapeHtml(p.categoria || "Lingerie")} • R$ ${Number(p.preco).toFixed(2)}</small>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-secondary" onclick="adminRemoveProduct(${p.id})">Delete</button>
+        <button class="btn btn-secondary" onclick="adminRemoverProduto(${p.id})">Excluir</button>
       </div>
     </div>
   `).join("");
 }
 
-function adminAddProduct() {
-  const name = (document.getElementById("pName").value || "").trim();
-  const category = (document.getElementById("pCat").value || "").trim() || "Lingerie";
-  const price = Number(document.getElementById("pPrice").value);
-  const imageUrl = (document.getElementById("pImg").value || "").trim();
+function adminAdicionarProduto() {
+  const nome = (document.getElementById("pNome").value || "").trim();
+  const categoria = (document.getElementById("pCategoria").value || "").trim() || "Lingerie";
+  const preco = Number(document.getElementById("pPreco").value);
+  const imagemUrl = (document.getElementById("pImagem").value || "").trim();
 
-  if (!name || !imageUrl || !Number.isFinite(price) || price <= 0) {
-    alert("Please fill Name, Price and Image URL (Cloudinary).");
+  if (!nome || !imagemUrl || !Number.isFinite(preco) || preco <= 0) {
+    alert("Preencha Nome, Preço e a URL da imagem (Cloudinary).");
     return;
   }
 
-  products = loadProducts();
-  const newId = products.length ? Math.max(...products.map(x => x.id)) + 1 : 1;
+  produtos = carregarProdutos();
+  const newId = produtos.length ? Math.max(...produtos.map(x => x.id)) + 1 : 1;
 
-  products.push({ id: newId, name, category, price, imageUrl });
-  saveProducts(products);
+  produtos.push({ id: newId, nome, categoria, preco, imagemUrl });
+  salvarProdutos(produtos);
 
-  document.getElementById("pName").value = "";
-  document.getElementById("pCat").value = "";
-  document.getElementById("pPrice").value = "";
-  document.getElementById("pImg").value = "";
+  document.getElementById("pNome").value = "";
+  document.getElementById("pCategoria").value = "";
+  document.getElementById("pPreco").value = "";
+  document.getElementById("pImagem").value = "";
 
-  renderAdmin();
-  renderProducts();
+  renderizarAdmin();
+  renderizarProdutos();
 }
 
-// OPTIONAL: reset products to defaults
-function adminResetProducts() {
-  saveProducts(DEFAULT_PRODUCTS);
-  renderAdmin();
-  renderProducts();
+function adminRemoverProduto(id) {
+  produtos = carregarProdutos().filter(p => p.id !== id);
+  salvarProdutos(produtos);
+
+  // remove do carrinho se existir
+  carrinho = carrinho.filter(x => x.id !== id);
+  salvarCarrinho();
+
+  renderizarAdmin();
+  renderizarProdutos();
 }
 
-function adminRemoveProduct(id) {
-  products = loadProducts().filter(p => p.id !== id);
-  saveProducts(products);
-
-  // also remove from cart if exists
-  cart = cart.filter(x => x.id !== id);
-  saveCart();
-
-  renderAdmin();
-  renderProducts();
+// -------------------- ADMIN ESCONDIDO (ACESSO POR URL) --------------------
+// Para abrir: https://seusite.com/#admin
+function checarHashAdmin() {
+  const hash = (location.hash || "").replace("#", "");
+  if (hash === "admin") {
+    showView("admin");
+  }
 }
+window.addEventListener("hashchange", checarHashAdmin);
 
-// -------------------- CONTACT LINK --------------------
+// -------------------- WHATS LINK --------------------
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
-  if (!el) return;
-  el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-// INIT
-renderProducts();
-updateBadge();
-updateWhatsLink();
+  if (!el) retur

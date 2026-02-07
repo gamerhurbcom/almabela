@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Icons (profissional) -->
+  <!-- Ícones (profissional) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
@@ -22,7 +22,7 @@
     <header class="header">
       <div class="header-inner">
         <a class="brand" href="./" onclick="showView('colecao', event)">
-          <!-- Troque logo.png pelo arquivo da sua logo -->
+          <!-- Troque logo.png pelo seu arquivo -->
           <img class="brand-logo" src="./logo.png" alt="Alma Bela" />
           <div class="brand-text">
             <div class="brand-name">ALMA BELA</div>
@@ -35,15 +35,9 @@
         </button>
 
         <nav class="nav" id="navMenu">
-          <button class="nav-link active" onclick="showView('colecao', event)">
-            Coleção
-          </button>
-          <button class="nav-link" onclick="showView('sobre', event)">
-            Sobre
-          </button>
-          <button class="nav-link" onclick="showView('contato', event)">
-            Contato
-          </button>
+          <button class="nav-link active" onclick="showView('colecao', event)">Coleção</button>
+          <button class="nav-link" onclick="showView('sobre', event)">Sobre</button>
+          <button class="nav-link" onclick="showView('contato', event)">Contato</button>
         </nav>
 
         <div class="header-actions">
@@ -89,8 +83,8 @@
         <div class="container">
           <div class="card">
             <h2>Sobre a Alma Bela</h2>
-            <p>Um catálogo online para você escolher, montar seu pedido e finalizar diretamente no WhatsApp com praticidade e discrição.</p>
-            <p>Todos os produtos são gerenciados no painel administrativo e aparecem para todos os usuários.</p>
+            <p>Catálogo online para escolher seus produtos e finalizar o pedido no WhatsApp com praticidade e discrição.</p>
+            <p>Os produtos são gerenciados no painel administrativo (acesso restrito).</p>
           </div>
         </div>
       </section>
@@ -108,7 +102,7 @@
         </div>
       </section>
 
-      <!-- ADMIN (ESCONDIDO - acessa por /#admin) -->
+      <!-- ADMIN (ESCONDIDO: só abre com /#admin e login) -->
       <section id="admin" class="section">
         <div class="container">
           <div class="card">
@@ -168,7 +162,7 @@
                   </div>
 
                   <p class="hint">
-                    Dica: as imagens ficam no Cloudinary, e o link fica salvo no Firebase junto com o produto.
+                    As imagens ficam no Cloudinary. O link da imagem é salvo no Firebase junto com o produto.
                   </p>
                 </div>
 
@@ -177,20 +171,21 @@
                     <h3>Produtos cadastrados</h3>
                     <span class="muted" id="adminCount">0 itens</span>
                   </div>
+
                   <div id="adminList"></div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
     </main>
 
-    <!-- FOOTER -->
+    <!-- FOOTER (SEM LINK ADMIN) -->
     <footer class="footer">
       <div class="footer-inner">
         <span class="muted">© <span id="year"></span> Alma Bela</span>
-        <a class="muted" href="#admin" onclick="location.hash='admin'">Acesso administrativo</a>
       </div>
     </footer>
   </div>
@@ -226,6 +221,7 @@
         </button>
       </div>
       <div class="modal-body">
+        <!-- Mensagens (login + sucesso) -->
         <div class="alert" id="loginMsg" style="display:none;"></div>
 
         <div class="form-row">
@@ -238,9 +234,7 @@
           <input type="password" id="passInput" placeholder="Digite sua senha" />
         </div>
 
-        <button class="btn primary full" onclick="adminLogin()">
-          Entrar
-        </button>
+        <button class="btn primary full" onclick="adminLogin()">Entrar</button>
       </div>
     </div>
   </div>
@@ -248,7 +242,7 @@
   <!-- Cloudinary Upload Widget -->
   <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
 
-  <!-- App (Firebase Module) -->
+  <!-- App -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

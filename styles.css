@@ -44,7 +44,7 @@ body{
   min-width: 220px;
 }
 .brand-logo{
-  height:74px;
+  height:78px;
   width:auto;
   display:block;
   object-fit:contain;
@@ -578,8 +578,6 @@ body{
   align-items:center;
   gap:10px;
 }
-.footer-inner a{ text-decoration:none; }
-.footer-inner a:hover{ text-decoration:underline; }
 
 /* RESPONSIVE */
 @media (max-width: 980px){
@@ -590,7 +588,7 @@ body{
     position:absolute;
     left:16px;
     right:16px;
-    top:90px;
+    top:98px;
     flex-direction:column;
     gap:8px;
     background:white;
@@ -603,7 +601,7 @@ body{
 
   .admin-grid{ grid-template-columns: 1fr; }
   .brand{ min-width: auto; }
-  .brand-logo{ height:62px; }
+  .brand-logo{ height:66px; }
   .hero h1{ font-size:34px; }
 }
 

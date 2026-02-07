@@ -297,22 +297,22 @@ function renderProdutos() {
   }
 
   grid.innerHTML = list.map(p => `
-    <article class="product">
+    <article class="product" onclick="openProduct('${p.id}')">
       ${renderCarousel(p)}
-      <div class="product-body">
+      <div class="product-body" onclick="event.stopPropagation()">
         <div class="product-meta">
           <span class="tag">${escapeHtml(p.categoria || "Lingerie")}</span>
           <span class="price">R$ ${money(p.preco)}</span>
         </div>
         <div class="title">${escapeHtml(p.nome)}</div>
         <button class="btn primary full" onclick="addToCart('${p.id}')">
-          <i class="fa-solid fa-plus"></i>
           Adicionar
         </button>
       </div>
     </article>
   `).join("");
 }
+
 
 /* ==========================
    CART

@@ -20,11 +20,12 @@ const CONFIG = {
   WHATSAPP: "5521979405145",
 
   CLOUDINARY: {
-    cloudName: "doi067uao",
-    uploadPreset: "Unsigned"
+    cloudName: "CLOUD_NAME_AQUI",
+    uploadPreset: "UPLOAD_PRESET_AQUI"
   }
 };
 
+/* Firebase config (o seu) */
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -61,21 +62,23 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
 function money(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
 }
+
 function toast(texto, isError = false) {
-  const box = document.getElementById("loginMsg");
-  if (!box) return;
+  const el = document.getElementById("loginMsg");
+  if (!el) return;
 
-  box.textContent = texto;
-  box.style.display = "block";
-  box.style.borderColor = isError ? "rgba(226,74,59,.35)" : "rgba(60,170,90,.35)";
-  box.style.background = isError ? "rgba(226,74,59,.10)" : "rgba(60,170,90,.10)";
-  box.style.color = isError ? "#7a1f1b" : "#145a2a";
+  el.textContent = texto;
+  el.style.display = "block";
+  el.style.borderColor = isError ? "rgba(226,74,59,.35)" : "rgba(60,170,90,.35)";
+  el.style.background = isError ? "rgba(226,74,59,.10)" : "rgba(60,170,90,.10)";
+  el.style.color = isError ? "#7a1f1b" : "#145a2a";
 
-  setTimeout(() => (box.style.display = "none"), 2200);
+  setTimeout(() => (el.style.display = "none"), 2500);
 }
 
 /* ==========================
@@ -112,16 +115,18 @@ window.openModal = function openModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
 };
+
 window.closeModal = function closeModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove("active");
 };
+
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
 /* ==========================
-   PRODUCTS (FIRESTORE)
+   FIRESTORE: LISTEN PRODUCTS
 ========================== */
 function listenProdutos() {
   const q = query(collection(db, "products"), orderBy("criadoEm", "desc"));
@@ -140,7 +145,9 @@ function preencherCategorias() {
   if (!select) return;
 
   const atual = select.value || "";
-  const cats = Array.from(new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))).sort();
+  const cats = Array.from(
+    new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))
+  ).sort();
 
   select.innerHTML = `
     <option value="">Todas as categorias</option>
@@ -165,19 +172,27 @@ window.filtrarProdutos = function filtrarProdutos() {
 };
 
 /* ==========================
-   CARROSSEL
+   ✅ CARROSSEL (SEU CÓDIGO)
 ========================== */
 function renderCarousel(p) {
-  const imgs = Array.isArray(p.imagens) && p.imagens.length ? p.imagens : [];
+  // Aceita o novo padrão (imagens[]) e o antigo (imagemUrl)
+  const imgs =
+    Array.isArray(p.imagens) && p.imagens.length
+      ? p.imagens
+      : (p.imagemUrl ? [p.imagemUrl] : []);
 
   if (!imgs.length) {
-    return `<div class="carousel"><div style="padding:16px;color:#777;">Sem imagem</div></div>`;
+    return `
+      <div class="carousel">
+        <div style="padding:16px;color:#777;font-weight:700;">Sem imagem</div>
+      </div>
+    `;
   }
 
   const id = `c_${p.id}`;
 
   return `
-    <div class="carousel" id="${id}">
+    <div class="carousel" id="${id}" data-index="0">
       <div class="carousel-track" style="transform:translateX(0%);">
         ${imgs.map(url => `<img class="carousel-img" src="${url}" alt="">`).join("")}
       </div>
@@ -222,10 +237,7 @@ function setCarouselIndex(id, index) {
 
   st.track.style.transform = `translateX(-${i * 100}%)`;
 
-  st.dots.forEach((d, idx) => {
-    d.classList.toggle("active", idx === i);
-  });
-
+  st.dots.forEach((d, idx) => d.classList.toggle("active", idx === i));
   st.el.dataset.index = String(i);
 }
 
@@ -245,6 +257,7 @@ window.carouselGo = function carouselGo(id, index) {
   setCarouselIndex(id, index);
 };
 
+/* swipe mobile */
 document.addEventListener("touchstart", (e) => {
   const car = e.target.closest?.(".carousel");
   if (!car) return;
@@ -260,9 +273,8 @@ document.addEventListener("touchend", (e) => {
   const diff = endX - startX;
 
   if (Math.abs(diff) < 40) return;
-
-  if (diff < 0) carouselNext(car.id);
-  else carouselPrev(car.id);
+  if (diff < 0) window.carouselNext(car.id);
+  else window.carouselPrev(car.id);
 }, { passive: true });
 
 /* ==========================
@@ -304,16 +316,22 @@ function saveCart() {
   localStorage.setItem("almabela_cart", JSON.stringify(carrinho));
   updateBadge();
 }
+
 function updateBadge() {
   const badge = document.getElementById("badge");
   if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
 }
 
+/* ==========================
+   ✅ addToCart (SEU CÓDIGO)
+========================== */
 window.addToCart = function addToCart(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
-  const imgPrincipal = (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] : "";
+  const imgPrincipal =
+    (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] :
+    (p.imagemUrl ? p.imagemUrl : "");
 
   const item = carrinho.find(x => x.id === id);
   if (item) item.qtd += 1;
@@ -397,7 +415,7 @@ window.finalizarWhatsApp = function finalizarWhatsApp() {
 };
 
 /* ==========================
-   ADMIN
+   ADMIN AUTH
 ========================== */
 window.openLogin = function openLogin() {
   openModal("loginModal");
@@ -444,7 +462,10 @@ function renderAdmin() {
   if (count) count.textContent = `${produtos.length} itens`;
 
   list.innerHTML = produtos.map(p => {
-    const imgPrincipal = (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] : "";
+    const imgPrincipal =
+      (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] :
+      (p.imagemUrl ? p.imagemUrl : "");
+
     return `
       <div class="admin-item">
         <div style="display:flex; gap:10px; align-items:center;">
@@ -480,10 +501,7 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   const preco = Number(document.getElementById("pPreco")?.value);
 
   const imagensRaw = (document.getElementById("pImagens")?.value || "").trim();
-  const imagens = imagensRaw
-    .split("\n")
-    .map(x => x.trim())
-    .filter(Boolean);
+  const imagens = imagensRaw.split("\n").map(x => x.trim()).filter(Boolean);
 
   if (!nome || !imagens.length || !Number.isFinite(preco) || preco <= 0) {
     toast("Preencha nome, preço e importe pelo menos 1 foto.", true);
@@ -530,7 +548,7 @@ window.adminExcluirProduto = async function adminExcluirProduto(id) {
 };
 
 /* ==========================
-   CLOUDINARY (UPLOAD VÁRIAS FOTOS)
+   CLOUDINARY (UPLOAD MÚLTIPLO)
 ========================== */
 window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   if (!adminUser) {
@@ -569,11 +587,10 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
 };
 
 /* ==========================
-   ADMIN ESCONDIDO
+   ADMIN ESCONDIDO (#admin)
 ========================== */
 function checkAdminHash() {
   const hash = (location.hash || "").replace("#", "");
-
   if (hash === "admin") {
     if (!adminUser) {
       history.replaceState(null, "", "#");
@@ -594,6 +611,7 @@ function updateWhatsLink() {
   if (!el) return;
   el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
 }
+
 function setYear() {
   const y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();

@@ -20,8 +20,8 @@ const CONFIG = {
   WHATSAPP: "5521979405145",
 
   CLOUDINARY: {
-    cloudName: "CLOUD_NAME_AQUI",
-    uploadPreset: "UPLOAD_PRESET_AQUI"
+    cloudName: "doi067uao",
+    uploadPreset: "Unsigned"
   }
 };
 

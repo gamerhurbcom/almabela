@@ -719,3 +719,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const fy = document.getElementById("footerYear");
   if (fy) fy.textContent = new Date().getFullYear();
 });
+// ======= EXPOR FUNÇÕES NO ESCOPO GLOBAL (necessário por causa do type="module") =======
+window.adminLogin = adminLogin;
+window.openAdmin = openAdmin;
+window.closeAdmin = closeAdmin;
+window.adminLogout = adminLogout;
+
+window.openProductModal = openProductModal;
+window.closeProductModal = closeProductModal;
+
+window.addToCart = addToCart;
+window.openCart = openCart;
+window.closeCart = closeCart;
+
+window.updateQty = updateQty;
+window.removeCartItem = removeCartItem;
+window.checkoutWhatsapp = checkoutWhatsapp;
+
+window.carouselPrev = carouselPrev;
+window.carouselNext = carouselNext;
+window.carouselGo = carouselGo;

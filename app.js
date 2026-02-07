@@ -12,8 +12,8 @@
 const WHATSAPP = "5521979405145";
 
 // Cloudinary
-const CLOUDINARY_CLOUD_NAME = "SEU_CLOUD_NAME";
-const CLOUDINARY_UPLOAD_PRESET = "SEU_UPLOAD_PRESET";
+const CLOUDINARY_CLOUD_NAME = "doi067uao";
+const CLOUDINARY_UPLOAD_PRESET = "Unsigned";
 
 // Coleção Firestore
 const COLLECTION = "products";

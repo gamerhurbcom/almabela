@@ -2,7 +2,6 @@
 // ALMA BELA - Firebase + Cloudinary
 // ===============================
 
-// ---------- Firebase Modules ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import {
@@ -22,14 +21,13 @@ const CONFIG = {
   NOME_LOJA: "ALMA BELA",
   WHATSAPP: "5521979405145",
 
-  // Cloudinary (preencha com os seus dados)
   CLOUDINARY: {
-    cloudName: "doi067uao",
-    uploadPreset: "Unsigned"
+    cloudName: "CLOUD_NAME_AQUI",
+    uploadPreset: "UPLOAD_PRESET_AQUI"
   }
 };
 
-// ---------- Firebase config (SEU) ----------
+// ---------- FIREBASE CONFIG (SEU) ----------
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -40,20 +38,19 @@ const firebaseConfig = {
   measurementId: "G-2BZDHCSZSQ"
 };
 
-// ---------- Init ----------
+// ---------- INIT ----------
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// coleção products
 const productsRef = collection(db, "products");
 
-// ---------- Estado ----------
+// ---------- ESTADO ----------
 let produtos = [];
 let carrinho = JSON.parse(localStorage.getItem("almabela_cart_firestore")) || [];
 let adminUser = null;
 
-// ---------- Helpers ----------
+// ---------- HELPERS ----------
 function escapeHtml(str) {
   return String(str)
     .replaceAll("&", "&amp;")
@@ -104,7 +101,7 @@ document.addEventListener("click", e => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
-// ---------- PRODUTOS (Firestore realtime) ----------
+// ---------- FIRESTORE REALTIME ----------
 function iniciarListenerProdutos() {
   const q = query(productsRef, orderBy("criadoEm", "desc"));
 
@@ -115,6 +112,7 @@ function iniciarListenerProdutos() {
   });
 }
 
+// ---------- RENDER PRODUTOS ----------
 function renderizarProdutos() {
   const grid = document.getElementById("grid");
   if (!grid) return;
@@ -230,7 +228,7 @@ window.finalizarWhatsApp = function finalizarWhatsApp() {
   window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 };
 
-// ---------- ADMIN ----------
+// ---------- ADMIN LOGIN ----------
 window.openLogin = function openLogin() {
   openModal("loginModal");
 };
@@ -257,6 +255,7 @@ window.adminSair = async function adminSair() {
   await signOut(auth);
 };
 
+// ---------- ADMIN UI ----------
 function renderizarAdmin() {
   const locked = document.getElementById("adminLocked");
   const panel = document.getElementById("adminPanel");
@@ -269,7 +268,7 @@ function renderizarAdmin() {
     return;
   }
 
-  locked.style.display = "block";
+  locked.style.display = "none";
   panel.style.display = "block";
 
   list.innerHTML = produtos.map(p => `
@@ -285,11 +284,7 @@ function renderizarAdmin() {
   `).join("");
 }
 
-window.adminExcluirProduto = async function adminExcluirProduto(id) {
-  if (!adminUser) return;
-  await deleteDoc(doc(db, "products", id));
-};
-
+// ---------- CRUD FIRESTORE ----------
 window.adminAdicionarProduto = async function adminAdicionarProduto() {
   if (!adminUser) return;
 
@@ -317,8 +312,18 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   document.getElementById("pImagem").value = "";
 };
 
-// ---------- Cloudinary Upload ----------
+window.adminExcluirProduto = async function adminExcluirProduto(id) {
+  if (!adminUser) return;
+  await deleteDoc(doc(db, "products", id));
+};
+
+// ---------- CLOUDINARY UPLOAD (GALERIA) ----------
 window.abrirUploadCloudinary = function abrirUploadCloudinary() {
+  if (!CONFIG.CLOUDINARY.cloudName || !CONFIG.CLOUDINARY.uploadPreset) {
+    alert("Preencha CLOUD_NAME e UPLOAD_PRESET no app.js");
+    return;
+  }
+
   const widget = cloudinary.createUploadWidget(
     {
       cloudName: CONFIG.CLOUDINARY.cloudName,
@@ -331,6 +336,7 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
         const url = result.info.secure_url;
         const inp = document.getElementById("pImagem");
         if (inp) inp.value = url;
+        alert("✅ Imagem enviada para o Cloudinary!");
       }
     }
   );
@@ -338,14 +344,14 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   widget.open();
 };
 
-// ---------- Admin escondido ----------
+// ---------- ADMIN ESCONDIDO ----------
 function checarHashAdmin() {
   const hash = (location.hash || "").replace("#", "");
   if (hash === "admin") showView("admin");
 }
 window.addEventListener("hashchange", checarHashAdmin);
 
-// ---------- Contato ----------
+// ---------- CONTATO ----------
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
   if (!el) return;

@@ -1,199 +1,1250 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alma Bela - Loja Premium</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
-</head>
-<body unresolved>
-    <header>
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alma Bela - Loja Premium</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+            background-color: #faf7f4;
+            color: #1a1a1a;
+        }
+
+        :root {
+            --primary: #c9a17a;
+            --accent: #d4927d;
+            --bg-light: #faf7f4;
+            --text-dark: #1a1a1a;
+            --text-gray: #666;
+            --border: #e8dcd8;
+            --light-hover: #f5f0ed;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo-img {
+            height: 40px;
+            width: 40px;
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .logo-text p {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--primary);
+        }
+
+        .nav {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: var(--primary);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cart-btn {
+            padding: 8px 12px;
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .cart-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        main {
+            padding: 40px 0;
+            min-height: calc(100% - 60px);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .hero p {
+            font-size: 15px;
+            color: var(--text-gray);
+            letter-spacing: 1px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid var(--border);
+            transition: all 0.4s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transform: translateY(-5px);
+        }
+
+        .product-image-wrapper {
+            height: 280px;
+            overflow: hidden;
+            background: var(--light-hover);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 18px;
+        }
+
+        .product-category {
+            font-size: 10px;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .add-to-cart {
+            width: 100%;
+            padding: 10px;
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .add-to-cart:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--light-hover);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-gray);
+            transition: color 0.2s ease;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .close-btn:hover {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: var(--light-hover);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .image-preview {
+            width: 100%;
+            max-width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin: 12px auto;
+            display: none;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .page-section {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .page-section h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .page-section p {
+            color: var(--text-gray);
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .page-section a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .page-section a:hover {
+            text-decoration: underline;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            align-items: flex-start;
+        }
+
+        .cart-item-image {
+            width: 60px;
+            height: 75px;
+            object-fit: cover;
+            background: var(--light-hover);
+            flex-shrink: 0;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .cart-item-price {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .cart-footer {
+            padding: 18px;
+            border-top: 1px solid var(--border);
+            background: var(--light-hover);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            border-left: 4px solid;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 24px;
+            margin: -40px -20px 30px -20px;
+        }
+
+        .admin-header h2 {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .products-table th {
+            background: var(--light-hover);
+            color: var(--text-dark);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .products-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 10px;
+            border-radius: 4px;
+            border: 1px solid;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .btn-edit {
+            background: white;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-delete {
+            background: white;
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-delete:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 1px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-hover);
+        }
+
+        .security-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+                position: fixed;
+                top: 50px;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: white;
+                padding: 16px;
+                gap: 12px;
+                border-top: 1px solid var(--border);
+                z-index: 49;
+            }
+
+            .nav.active {
+                display: flex;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 12px;
+            }
+        }
+    </style>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <header>
+   <div class="container">
+    <div class="header-content"><a class="logo" onclick="showSection('colecao')">
+      <svg class="logo-img" viewbox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><!-- Círculo externo --> <circle cx="20" cy="20" r="18" fill="#c9a17a" opacity="0.1" stroke="#c9a17a" stroke-width="1" /> <!-- Diamante/gema --> <path d="M20 5 L28 15 L20 35 L12 15 Z" fill="#c9a17a" /> <path d="M20 8 L25 15 L20 30 L15 15 Z" fill="#d4927d" opacity="0.8" />
+      </svg>
+      <div class="logo-text">
+       <h1>Alma Bela</h1>
+       <p>Premium</p>
+      </div></a>
+     <nav class="nav" id="navMenu"><a onclick="showSection('colecao')">Coleç��o</a> <a onclick="showSection('sobre')">Sobre</a> <a onclick="showSection('contato')">Contato</a>
+     </nav>
+     <div class="header-right"><button class="cart-btn" onclick="openCartModal()"> 🛍️ <span class="cart-count" id="cartCount">0</span> </button> <button class="menu-toggle" onclick="toggleMenu()"> <span></span> <span></span> <span></span> </button>
+     </div>
+    </div>
+   </div>
+  </header>
+  <main class="container"><!-- COLEÇ��O -->
+   <div id="colecao" class="section active">
+    <div class="hero">
+     <h1>Coleção Premium</h1>
+     <p>Elegância e Conforto em Cada Peça</p>
+    </div>
+    <div class="products-grid" id="productsGrid">
+     <p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Carregando produtos...</p>
+    </div>
+   </div><!-- SOBRE -->
+   <div id="sobre" class="section">
+    <div class="page-section">
+     <h2>Sobre Alma Bela</h2>
+     <p>Bem-vindo à Alma Bela, sua loja premium de produtos de qualidade excepcional.</p>
+     <p>Nos dedicamos a oferecer os melhores produtos com elegância, conforto e discrição.</p>
+     <p>Cada peça da nossa coleção é cuidadosamente selecionada para garantir sua satisfação.</p>
+     <p><strong>Missão:</strong> Proporcionar experiências incríveis com produtos premium de alta qualidade.</p>
+     <p><strong>Visão:</strong> Ser referência em excelência e inovação no segmento.</p>
+    </div>
+   </div><!-- CONTATO -->
+   <div id="contato" class="section">
+    <div class="page-section">
+     <h2>Contato</h2>
+     <p><strong>📱 WhatsApp:</strong> <a href="https://wa.me/5521979405145" target="_blank">+55 21 97940-5145</a></p>
+     <p><strong>📧 Email:</strong> gomessilva@gmail.com</p>
+     <p><strong>⏰ Horário:</strong> Seg-Sex, 10h às 18h</p>
+     <p style="margin-top: 30px; font-size: 14px;">Estamos sempre prontos para ajudar!</p>
+    </div>
+   </div><!-- ADMIN -->
+   <div id="admin" class="section">
+    <div class="admin-header">
+     <h2>Painel Administrativo</h2>
+     <p>Gerencie seus produtos com segurança</p>
+    </div>
+    <div class="security-warning">
+     ⚠️ <strong>Segurança:</strong> Sua sessão expirará em 30 minutos sem atividade.
+    </div>
+    <div id="adminMessage"></div><button class="btn btn-primary" style="margin-bottom: 24px;" onclick="openProductModal()"> ➕ Novo Produto </button>
+    <div id="adminContent">
+     <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carregando...</p>
+    </div>
+   </div>
+  </main><!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title">🔐 Acesso Administrativo</h2><button class="close-btn" onclick="closeLoginModal()">×</button>
+    </div>
+    <div class="modal-body">
+     <div id="loginMessage"></div>
+     <form onsubmit="login(event)">
+      <div class="form-group"><label for="loginEmail">Email</label> <input type="email" id="loginEmail" required>
+      </div>
+      <div class="form-group"><label for="loginPassword">Senha</label> <input type="password" id="loginPassword" required>
+      </div><button type="submit" class="btn btn-primary" style="width: 100%;"> Entrar </button>
+     </form>
+    </div>
+   </div>
+  </div><!-- PRODUTO MODAL -->
+  <div class="modal" id="productModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title" id="productModalTitle">Novo Produto</h2><button class="close-btn" onclick="closeProductModal()">×</button>
+    </div>
+    <div class="modal-body">
+     <form onsubmit="saveProduct(event)">
+      <div class="form-group"><label for="productName">Nome</label> <input type="text" id="productName" required>
+      </div>
+      <div class="form-group"><label for="productCategory">Categoria</label> <select id="productCategory" required> <option value="">Selecione</option> <option value="Lingerie">Lingerie</option> <option value="Gel">Gel</option> <option value="Brinquedos">Brinquedos</option> <option value="Acessórios">Acessórios</option> </select>
+      </div>
+      <div class="form-group"><label for="productPrice">Preço (R$)</label> <input type="number" id="productPrice" step="0.01" required>
+      </div>
+      <div class="form-group"><label for="fileInput">Imagem</label> <input type="file" id="fileInput" accept="image/*" onchange="handleImageSelect(event)" required> <img id="imagePreview" class="image-preview" alt="Preview"> <input type="hidden" id="productImage">
+      </div>
+      <div class="form-group"><label for="productColors">Cores (vírgula separadas)</label> <input type="text" id="productColors">
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Alma Bela - Loja Premium</title>
+       <link rel="stylesheet" href="styles.css">
+       <header>
         <div class="container">
-            <div class="header-content">
-                <a class="logo" onclick="showSection('colecao')">
-                    <img src="logo.png" alt="Alma Bela" class="logo-img">
-                    <div class="logo-text">
-                        <h1>Alma Bela</h1>
-                        <p>Premium</p>
-                    </div>
-                </a>
-
-                <nav class="nav" id="navMenu">
-                    <a onclick="showSection('colecao')">Coleção</a>
-                    <a onclick="showSection('sobre')">Sobre</a>
-                    <a onclick="showSection('contato')">Contato</a>
-                </nav>
-
-                <div class="header-right">
-                    <button class="cart-btn" onclick="openCartModal()">
-                        🛍️
-                        <span class="cart-count" id="cartCount">0</span>
-                    </button>
-                    <button class="menu-toggle" onclick="toggleMenu()">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                </div>
-            </div>
+         <div class="header-content"><a class="logo" onclick="showSection('colecao')">
+           <svg class="logo-img" viewbox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="18" fill="#c9a17a" opacity="0.1" stroke="#c9a17a" stroke-width="1" /> <path d="M20 5 L28 15 L20 35 L12 15 Z" fill="#c9a17a" /> <path d="M20 8 L25 15 L20 30 L15 15 Z" fill="#d4927d" opacity="0.8" />
+           </svg>
+           <div class="logo-text">
+            <h1>Alma Bela</h1>
+            <p>Premium</p>
+           </div></a>
+          <nav class="nav" id="navMenu"><a onclick="showSection('colecao')">Coleção</a> <a onclick="showSection('sobre')">Sobre</a> <a onclick="showSection('contato')">Contato</a>
+          </nav>
+          <div class="header-right"><button class="cart-btn" onclick="openCartModal()"> 🛍️ <span class="cart-count" id="cartCount">0</span> </button> <button class="menu-toggle" onclick="toggleMenu()"> <span></span> <span></span> <span></span> </button>
+          </div>
+         </div>
         </div>
-    </header>
-
-    <main class="container">
-        <!-- COLEÇÃO -->
+       </header>
+       <main class="container"><!-- COLEÇÃO -->
         <div id="colecao" class="section active">
-            <div class="hero">
-                <h1>Coleção Premium</h1>
-                <p>Elegância e Conforto em Cada Peça</p>
-            </div>
-            <div class="products-grid" id="productsGrid">
-                <p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Carregando produtos...</p>
-            </div>
-        </div>
-
-        <!-- SOBRE -->
+         <div class="hero">
+          <h1>Coleção Premium</h1>
+          <p>Elegância e Conforto em Cada Peça</p>
+         </div>
+         <div class="products-grid" id="productsGrid">
+          <p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Carregando produtos...</p>
+         </div>
+        </div><!-- SOBRE -->
         <div id="sobre" class="section">
-            <div class="page-section">
-                <h2>Sobre Alma Bela</h2>
-                <p>Bem-vindo à Alma Bela, sua loja premium de produtos de qualidade excepcional.</p>
-                <p>Nos dedicamos a oferecer os melhores produtos com elegância, conforto e discrição.</p>
-                <p>Cada peça da nossa coleção é cuidadosamente selecionada para garantir sua satisfação.</p>
-                <p><strong>Missão:</strong> Proporcionar experiências incríveis com produtos premium de alta qualidade.</p>
-                <p><strong>Visão:</strong> Ser referência em excelência e inovação no segmento.</p>
-            </div>
-        </div>
-
-        <!-- CONTATO -->
+         <div class="page-section">
+          <h2>Sobre Alma Bela</h2>
+          <p>Bem-vindo à Alma Bela, sua loja premium de produtos de qualidade excepcional.</p>
+          <p>Nos dedicamos a oferecer os melhores produtos com elegância, conforto e discrição.</p>
+          <p>Cada peça da nossa coleção é cuidadosamente selecionada para garantir sua satisfação.</p>
+          <p><strong>Missão:</strong> Proporcionar experiências incríveis com produtos premium de alta qualidade.</p>
+          <p><strong>Visão:</strong> Ser referência em excelência e inovação no segmento.</p>
+         </div>
+        </div><!-- CONTATO -->
         <div id="contato" class="section">
-            <div class="page-section">
-                <h2>Contato</h2>
-                <p><strong>📱 WhatsApp:</strong> <a href="https://wa.me/5521979405145" target="_blank">+55 21 97940-5145</a></p>
-                <p><strong>📧 Email:</strong> gomessilva@gmail.com</p>
-                <p><strong>⏰ Horário:</strong> Seg-Sex, 10h às 18h</p>
-                <p style="margin-top: 30px; font-size: 14px;">Estamos sempre prontos para ajudar!</p>
-            </div>
-        </div>
-
-        <!-- ADMIN -->
+         <div class="page-section">
+          <h2>Contato</h2>
+          <p><strong>📱 WhatsApp:</strong> <a href="https://wa.me/5521979405145" target="_blank">+55 21 97940-5145</a></p>
+          <p><strong>📧 Email:</strong> gomessilva@gmail.com</p>
+          <p><strong>⏰ Horário:</strong> Seg-Sex, 10h às 18h</p>
+          <p style="margin-top: 30px; font-size: 14px;">Estamos sempre prontos para ajudar!</p>
+         </div>
+        </div><!-- ADMIN -->
         <div id="admin" class="section">
-            <div class="admin-header">
-                <h2>Painel Administrativo</h2>
-                <p>Gerencie seus produtos com segurança</p>
-            </div>
-
-            <div class="security-warning">
-                ⚠️ <strong>Segurança:</strong> Sua sessão expirará em 30 minutos sem atividade.
-            </div>
-
-            <div id="adminMessage"></div>
-
-            <button class="btn btn-primary" style="margin-bottom: 24px;" onclick="openProductModal()">
-                ➕ Novo Produto
-            </button>
-
-            <div id="adminContent">
-                <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carregando...</p>
-            </div>
+         <div class="admin-header">
+          <h2>Painel Administrativo</h2>
+          <p>Gerencie seus produtos com segurança</p>
+         </div>
+         <div class="security-warning">
+          ⚠️ <strong>Segurança:</strong> Sua sessão expirará em 30 minutos sem atividade.
+         </div>
+         <div id="adminMessage"></div><button class="btn btn-primary" style="margin-bottom: 24px;" onclick="openProductModal()"> ➕ Novo Produto </button>
+         <div id="adminContent">
+          <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carregando...</p>
+         </div>
         </div>
-    </main>
-
-    <!-- LOGIN MODAL -->
-    <div class="modal" id="loginModal">
+       </main><!-- LOGIN MODAL -->
+       <div class="modal" id="loginModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">🔐 Acesso Administrativo</h2>
-                <button class="close-btn" onclick="closeLoginModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="loginMessage"></div>
-                <form onsubmit="login(event)">
-                    <div class="form-group">
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Senha</label>
-                        <input type="password" id="loginPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        Entrar
-                    </button>
-                </form>
-            </div>
+         <div class="modal-header">
+          <h2 class="modal-title">🔐 Acesso Administrativo</h2><button class="close-btn" onclick="closeLoginModal()">×</button>
+         </div>
+         <div class="modal-body">
+          <div id="loginMessage"></div>
+          <div class="form-group"><label for="loginEmail">Email</label> <input type="email" id="loginEmail" required>
+          </div>
+          <div class="form-group"><label for="loginPassword">Senha</label> <input type="password" id="loginPassword" required>
+          </div><button type="submit" class="btn btn-primary" style="width: 100%;"> Entrar </button>
+         </div>
         </div>
+       </div><!-- PRODUTO MODAL -->
+       <div class="modal" id="productModal">
+        <div class="modal-content">
+         <div class="modal-header">
+          <h2 class="modal-title" id="productModalTitle">Novo Produto</h2><button class="close-btn" onclick="closeProductModal()">×</button>
+         </div>
+         <div class="modal-body">
+          <form onsubmit="saveProduct(event)">
+           <div class="form-group"><label for="productName">Nome</label> <input type="text" id="productName" required>
+           </div>
+           <div class="form-group"><label for="productCategory">Categoria</label> <select id="productCategory" required> <option value="">Selecione</option> <option value="Lingerie">Lingerie</option> <option value="Gel">Gel</option> <option value="Brinquedos">Brinquedos</option> <option value="Acessórios">Acessórios</option> </select>
+           </div>
+           <div class="form-group"><label for="productPrice">Preço (R$)</label> <input type="number" id="productPrice" step="0.01" required>
+           </div>
+           <div class="form-group"><label for="fileInput">Imagem</label> <input type="file" id="fileInput" accept="image/*" onchange="handleImageSelect(event)" required> <img id="imagePreview" class="image-preview" alt="Preview"> <input type="hidden" id="productImage">
+           </div>
+           <div class="form-group"><label for="productColors">Cores (vírgula separadas)</label> <input type="text" id="productColors" placeholder="Rosê,Preto,Branco">
+           </div><button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn"> Salvar Produto </button>
+          </form>
+         </div>
+        </div>
+       </div><!-- CARRINHO MODAL -->
+       <div class="modal" id="cartModal">
+        <div class="modal-content">
+         <div class="modal-header">
+          <h2 class="modal-title">Seu Carrinho</h2><button class="close-btn" onclick="closeCartModal()">×</button>
+         </div>
+         <div class="modal-body">
+          <div id="cartItemsList">
+           <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carrinho vazio</p>
+          </div>
+         </div>
+         <div class="cart-footer">
+          <div class="cart-total"><span>Total:</span> <span id="cartTotal">R$ 0,00</span>
+          </div><button class="btn btn-primary" style="width: 100%;" onclick="checkout()"> 💬 Enviar via WhatsApp </button>
+         </div>
+        </div>
+       </div>
+       <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+       <script src="config.js"></script>
+       <script src="app.js"></script>
+      </div>
+     </form>
     </div>
-
-    <!-- PRODUTO MODAL -->
-    <div class="modal" id="productModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="productModalTitle">Novo Produto</h2>
-                <button class="close-btn" onclick="closeProductModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form onsubmit="saveProduct(event)">
-                    <div class="form-group">
-                        <label for="productName">Nome</label>
-                        <input type="text" id="productName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productCategory">Categoria</label>
-                        <select id="productCategory" required>
-                            <option value="">Selecione</option>
-                            <option value="Lingerie">Lingerie</option>
-                            <option value="Gel">Gel</option>
-                            <option value="Brinquedos">Brinquedos</option>
-                            <option value="Acessórios">Acessórios</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="productPrice">Preço (R$)</label>
-                        <input type="number" id="productPrice" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="fileInput">Imagem</label>
-                        <input type="file" id="fileInput" accept="image/*" onchange="handleImageSelect(event)" required>
-                        <img id="imagePreview" class="image-preview" alt="Preview">
-                        <input type="hidden" id="productImage">
-                    </div>
-                    <div class="form-group">
-                        <label for="productColors">Cores (vírgula separadas)</label>
-                        <input type="text" id="productColors" placeholder="Rosê,Preto,Branco">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn">
-                        Salvar Produto
-                    </button>
-                </form>
-            </div>
-        </div>
+   </div>
+  </div>="Rosê,Preto,Branco"&gt;  <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn"> Salvar Produto </button> <!-- CARRINHO MODAL -->
+  <div class="modal" id="cartModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title">Seu Carrinho</h2><button class="close-btn" onclick="closeCartModal()">×</button>
     </div>
+    <div class="modal-body">
+     <div id="cartItemsList">
+      <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carrinho vazio</p>
+     </div>
+    </div>
+    <div class="cart-footer">
+     <div class="cart-total"><span>Total:</span> <span id="cartTotal">R$ 0,00</span>
+     </div><button class="btn btn-primary" style="width: 100%;" onclick="checkout()"> �� Enviar via WhatsApp </button>
+    </div>
+   </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script><!-- ========== CONFIGURAÇÃO DA LOJA ========== -->
+  <script>
+        const ADMIN_EMAIL = 'gomessilva@gmail.com';
+        const CORRECT_PASSWORD_HASH = CryptoJS.SHA256('120624rg').toString();
+        const WHATSAPP_NUMBER = '5521979405145';
 
-    <!-- CARRINHO MODAL -->
-    <div class="modal" id="cartModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Seu Carrinho</h2>
-                <button class="close-btn" onclick="closeCartModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="cartItemsList">
-                    <p style="text-align: center; color: var(--text-gray); padding: 40px;">Carrinho vazio</p>
+        const SECURITY_CONFIG = {
+            maxLoginAttempts: 5,
+            lockoutDuration: 15 * 60 * 1000,
+            sessionTimeout: 30 * 60 * 1000
+        };
+    </script><!-- ========== APP.JS ========== -->
+  <script>
+        let loginAttempts = 0;
+        let lockoutTime = null;
+        let sessionTimer = null;
+
+        let currentUser = localStorage.getItem('adminUser');
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let editingProductId = null;
+        let currentImageUrl = '';
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+
+            if (sectionId === 'admin' && !currentUser) {
+                openLoginModal();
+                showSection('colecao');
+            }
+        }
+
+        function login(event) {
+            event.preventDefault();
+
+            if (lockoutTime && Date.now() - lockoutTime < SECURITY_CONFIG.lockoutDuration) {
+                const remainingTime = Math.ceil((SECURITY_CONFIG.lockoutDuration - (Date.now() - lockoutTime)) / 1000);
+                showLoginMessage(`❌ Muitas tentativas! Tente novamente em ${remainingTime}s`, 'error');
+                return;
+            }
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const enteredPasswordHash = CryptoJS.SHA256(password).toString();
+
+            if (email === ADMIN_EMAIL && enteredPasswordHash === CORRECT_PASSWORD_HASH) {
+                loginAttempts = 0;
+                lockoutTime = null;
+
+                const sessionToken = CryptoJS.lib.WordArray.random(32).toString();
+                localStorage.setItem('adminUser', email);
+                localStorage.setItem('sessionToken', sessionToken);
+                localStorage.setItem('sessionStart', Date.now());
+
+                currentUser = email;
+                closeLoginModal();
+                startSessionTimer();
+                showLoginMessage('✅ Login realizado com sucesso!', 'success');
+
+                setTimeout(() => {
+                    showSection('admin');
+                    loadAdminProducts();
+                }, 1000);
+            } else {
+                loginAttempts++;
+                if (loginAttempts >= SECURITY_CONFIG.maxLoginAttempts) {
+                    lockoutTime = Date.now();
+                    showLoginMessage('❌ Muitas tentativas! Bloqueado por 15 minutos', 'error');
+                } else {
+                    showLoginMessage(`❌ Email ou senha incorretos (${loginAttempts}/${SECURITY_CONFIG.maxLoginAttempts})`, 'error');
+                }
+            }
+        }
+
+        function showLoginMessage(text, type) {
+            const msg = document.getElementById('loginMessage');
+            msg.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => msg.innerHTML = '', 5000);
+        }
+
+        function startSessionTimer() {
+            clearTimeout(sessionTimer);
+            sessionTimer = setTimeout(() => {
+                logout();
+                showSection('colecao');
+                showMessage('🔒 Sua sessão expirou por inatividade', 'warning');
+            }, SECURITY_CONFIG.sessionTimeout);
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('adminUser');
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('sessionStart');
+            clearTimeout(sessionTimer);
+            showSection('colecao');
+        }
+
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function openProductModal() {
+            if (!currentUser) {
+                openLoginModal();
+                return;
+            }
+            editingProductId = null;
+            currentImageUrl = '';
+            document.getElementById('productName').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productColors').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imagePreview').classList.remove('active');
+            document.getElementById('productModalTitle').textContent = 'Novo Produto';
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        function openCartModal() {
+            updateCartUI();
+            document.getElementById('cartModal').classList.add('active');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cartModal').classList.remove('active');
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showMessage('❌ Selecione uma imagem válida', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageUrl = e.target.result;
+                const preview = document.getElementById('imagePreview');
+                preview.src = currentImageUrl;
+                preview.style.display = 'block';
+                preview.classList.add('active');
+                document.getElementById('productImage').value = currentImageUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function loadAdminProducts() {
+            const adminContent = document.getElementById('adminContent');
+            const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
+
+            if (products.length === 0) {
+                adminContent.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nenhum produto cadastrado</p>';
+                return;
+            }
+
+            adminContent.innerHTML = `
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Categoria</th>
+                            <th>Preço</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${products.map(p => `
+                            <tr>
+                                <td>${p.name}</td>
+                                <td>${p.category}</td>
+                                <td>R$ ${parseFloat(p.price).toFixed(2)}</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="btn-sm btn-edit" onclick="editProduct(${p.id})">Editar</button>
+                                        <button class="btn-sm btn-delete" onclick="deleteProduct(${p.id})">Deletar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function saveProduct(event) {
+            event.preventDefault();
+
+            if (!currentImageUrl) {
+                showMessage('❌ Selecione uma imagem', 'error');
+                return;
+            }
+
+            const productData = {
+                id: editingProductId || Date.now(),
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                image_url: currentImageUrl,
+                colors: document.getElementById('productColors').value.split(',').map(c => c.trim())
+            };
+
+            let products = JSON.parse(localStorage.getItem('almabela_products')) || [];
+
+            if (editingProductId) {
+                products = products.map(p => p.id === editingProductId ? productData : p);
+                showMessage('✅ Produto atualizado!', 'success');
+            } else {
+                products.push(productData);
+                showMessage('✅ Produto criado!', 'success');
+            }
+
+            localStorage.setItem('almabela_products', JSON.stringify(products));
+            closeProductModal();
+            loadAdminProducts();
+            loadProducts();
+        }
+
+        function editProduct(id) {
+            const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
+            const product = products.find(p => p.id === id);
+
+            if (!product) return;
+
+            editingProductId = id;
+            currentImageUrl = product.image_url;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCategory').value = product.category;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productColors').value = product.colors.join(', ');
+
+            const preview = document.getElementById('imagePreview');
+            preview.src = product.image_url;
+            preview.style.display = 'block';
+            preview.classList.add('active');
+
+            document.getElementById('productModalTitle').textContent = 'Editar Produto';
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function deleteProduct(id) {
+            if (!confirm('Tem certeza que deseja deletar?')) return;
+
+            let products = JSON.parse(localStorage.getItem('almabela_products')) || [];
+            products = products.filter(p => p.id !== id);
+            localStorage.setItem('almabela_products', JSON.stringify(products));
+
+            showMessage('✅ Produto deletado!', 'success');
+            loadAdminProducts();
+            loadProducts();
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('adminMessage');
+            if (!msg) return;
+            msg.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => msg.innerHTML = '', 4000);
+        }
+
+        async function loadProducts() {
+            const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
+            const grid = document.getElementById('productsGrid');
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Nenhum produto</p>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="${product.image_url}" alt="${product.name}" class="product-image">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</div>
+                        <button class="add-to-cart" onclick="addToCart(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url.replace(/'/g, "\\'").replace(/"/g, '\\"')}')">
+                            Adicionar
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <span id="cartTotal">R$ 0,00</span>
-                </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="checkout()">
-                    💬 Enviar via WhatsApp
-                </button>
-            </div>
-        </div>
-    </div>
+            `).join('');
+        }
 
-    <script src="config.js"></script>
-    <script src="app.js"></script>
-</body>
+        function addToCart(id, name, price, image) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.quantity += 1;
+            } else {
+                cart.push({ id, name, price, image, quantity: 1 });
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showMessage('✅ Adicionado ao carrinho!', 'success');
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cartItemsList');
+
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Carrinho vazio</p>';
+                document.getElementById('cartTotal').textContent = 'R$ 0,00';
+                return;
+            }
+
+            list.innerHTML = cart.map((item, idx) => `
+                <div class="cart-item">
+                    <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">R$ ${item.price.toFixed(2)} x${item.quantity}</div>
+                        <button class="btn btn-secondary btn-sm" onclick="removeFromCart(${idx})">Remover</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('cartTotal').textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            updateCartUI();
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                showMessage('Carrinho vazio!', 'error');
+                return;
+            }
+
+            let message = '🛍️ Novo Pedido - Alma Bela\n\n';
+            message += 'Produtos:\n';
+            cart.forEach((item, i) => {
+                message += `${i + 1}. ${item.name}\n`;
+                message += `   R$ ${item.price.toFixed(2)} x ${item.quantity}\n`;
+            });
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            message += `\nTotal: R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
+
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            updateCartUI();
+            closeCartModal();
+        }
+
+        function toggleMenu() {
+            const nav = document.getElementById('navMenu');
+            nav.classList.toggle('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('cartModal').classList.remove('active');
+                document.getElementById('productModal').classList.remove('active');
+                document.getElementById('loginModal').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'cartModal') closeCartModal();
+            if (e.target.id === 'productModal') closeProductModal();
+            if (e.target.id === 'loginModal') closeLoginModal();
+        });
+
+        loadProducts();
+        updateCartCount();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c9eb6cbb5a064d3',t:'MTc3MDQyMzU0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

@@ -1,3 +1,58 @@
+// ===============================
+// ALMA BELA - Firebase + Cloudinary
+// ===============================
+
+// ---------- Firebase Modules ----------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+// ---------- CONFIG ----------
+const CONFIG = {
+  NOME_LOJA: "ALMA BELA",
+  WHATSAPP: "5521979405145",
+
+  // Cloudinary (preencha com os seus dados)
+  CLOUDINARY: {
+    cloudName: "SEU_CLOUD_NAME",
+    uploadPreset: "SEU_UPLOAD_PRESET_UNSIGNED"
+  }
+};
+
+// ---------- Firebase config (SEU) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
+  authDomain: "almabela.firebaseapp.com",
+  projectId: "almabela",
+  storageBucket: "almabela.firebasestorage.app",
+  messagingSenderId: "304950181664",
+  appId: "1:304950181664:web:4f14dfa6dd0fcf9224a145",
+  measurementId: "G-2BZDHCSZSQ"
+};
+
+// ---------- Init ----------
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// coleção products
+const productsRef = collection(db, "products");
+
+// ---------- Estado ----------
+let produtos = [];
+let carrinho = JSON.parse(localStorage.getItem("almabela_cart_firestore")) || [];
+let adminUser = null;
+
 // ---------- Helpers ----------
 function escapeHtml(str) {
   return String(str)
@@ -8,41 +63,22 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-// ---------- Produtos (storage) ----------
-function carregarProdutos() {
-  const key = CONFIG.STORAGE_PRODUTOS;
-  const saved = localStorage.getItem(key);
-  if (saved) return JSON.parse(saved);
-
-  const seed = window.DEFAULT_PRODUCTS || [];
-  localStorage.setItem(key, JSON.stringify(seed));
-  return seed;
-}
-
-function salvarProdutos(produtos) {
-  localStorage.setItem(CONFIG.STORAGE_PRODUTOS, JSON.stringify(produtos));
-}
-
-// ---------- Carrinho ----------
-let carrinho = JSON.parse(localStorage.getItem(CONFIG.STORAGE_CARRINHO)) || [];
-let produtos = [];
-let adminLogado = localStorage.getItem(CONFIG.STORAGE_ADMIN) === "1";
-
-// ---------- Menu mobile ----------
-function toggleMenu() {
+// ---------- MENU MOBILE ----------
+window.toggleMenu = function toggleMenu() {
   const nav = document.getElementById("navMenu");
   if (nav) nav.classList.toggle("open");
-}
+};
+
 function fecharMenu() {
   const nav = document.getElementById("navMenu");
   if (nav) nav.classList.remove("open");
 }
 
-// ---------- Views ----------
-function showView(nome, ev) {
+// ---------- VIEW ----------
+window.showView = function showView(nome, ev) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  const target = document.getElementById(nome);
-  if (target) target.classList.add("active");
+  const sec = document.getElementById(nome);
+  if (sec) sec.classList.add("active");
 
   document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
   if (ev && ev.target && ev.target.classList.contains("nav-link")) ev.target.classList.add("active");
@@ -51,17 +87,40 @@ function showView(nome, ev) {
 
   if (nome === "colecao") renderizarProdutos();
   if (nome === "admin") renderizarAdmin();
+};
+
+// ---------- MODAIS ----------
+window.openModal = function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("active");
+};
+
+window.closeModal = function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("active");
+};
+
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("modal")) e.target.classList.remove("active");
+});
+
+// ---------- PRODUTOS (Firestore realtime) ----------
+function iniciarListenerProdutos() {
+  const q = query(productsRef, orderBy("criadoEm", "desc"));
+
+  onSnapshot(q, (snap) => {
+    produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarProdutos();
+    renderizarAdmin();
+  });
 }
 
-// ---------- Render Produtos ----------
 function renderizarProdutos() {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
-  produtos = carregarProdutos();
-
-  if (!produtos || produtos.length === 0) {
-    grid.innerHTML = `<p style="text-align:center;color:#777;">Nenhum produto cadastrado</p>`;
+  if (!produtos.length) {
+    grid.innerHTML = `<p style="text-align:center;color:#777;">Nenhum produto disponível</p>`;
     return;
   }
 
@@ -72,15 +131,15 @@ function renderizarProdutos() {
         <div class="product-tag">${escapeHtml(p.categoria || "Lingerie")}</div>
         <div class="product-name">${escapeHtml(p.nome)}</div>
         <div class="product-price">R$ ${Number(p.preco).toFixed(2)}</div>
-        <button class="btn-add" onclick="adicionarAoCarrinho(${p.id})">+ Adicionar</button>
+        <button class="btn-add" onclick="adicionarAoCarrinho('${p.id}')">+ Adicionar</button>
       </div>
     </div>
   `).join("");
 }
 
-// ---------- Carrinho UI ----------
+// ---------- CARRINHO ----------
 function salvarCarrinho() {
-  localStorage.setItem(CONFIG.STORAGE_CARRINHO, JSON.stringify(carrinho));
+  localStorage.setItem("almabela_cart_firestore", JSON.stringify(carrinho));
   atualizarBadge();
 }
 
@@ -89,7 +148,7 @@ function atualizarBadge() {
   if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
 }
 
-function adicionarAoCarrinho(id) {
+window.adicionarAoCarrinho = function adicionarAoCarrinho(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
@@ -99,12 +158,12 @@ function adicionarAoCarrinho(id) {
 
   salvarCarrinho();
   openCart();
-}
+};
 
-function openCart() {
+window.openCart = function openCart() {
   renderizarCarrinho();
   openModal("cartModal");
-}
+};
 
 function renderizarCarrinho() {
   const list = document.getElementById("cartList");
@@ -144,20 +203,20 @@ function renderizarCarrinho() {
   `;
 }
 
-function mudarQtd(idx, change) {
+window.mudarQtd = function mudarQtd(idx, change) {
   carrinho[idx].qtd += change;
   if (carrinho[idx].qtd <= 0) carrinho.splice(idx, 1);
   salvarCarrinho();
   renderizarCarrinho();
-}
+};
 
-function removerItem(idx) {
+window.removerItem = function removerItem(idx) {
   carrinho.splice(idx, 1);
   salvarCarrinho();
   renderizarCarrinho();
-}
+};
 
-function finalizarWhatsApp() {
+window.finalizarWhatsApp = function finalizarWhatsApp() {
   if (!carrinho.length) return;
 
   let msg = `🛍️ Pedido - ${CONFIG.NOME_LOJA}\n\n`;
@@ -169,54 +228,34 @@ function finalizarWhatsApp() {
   msg += `💰 Total: R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
 
   window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
-}
+};
 
-// ---------- Modais ----------
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add("active");
-}
-function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove("active");
-}
-document.addEventListener("click", e => {
-  if (e.target.classList.contains("modal")) e.target.classList.remove("active");
-});
-
-// ---------- Admin (escondido) ----------
-function openLogin() {
-  const msg = document.getElementById("loginMsg");
-  if (msg) msg.className = "msg";
+// ---------- ADMIN ----------
+window.openLogin = function openLogin() {
   openModal("loginModal");
-}
+};
 
-function adminLogin() {
+window.adminLogin = async function adminLogin() {
   const email = (document.getElementById("emailInput").value || "").trim();
   const senha = (document.getElementById("passInput").value || "").trim();
   const msg = document.getElementById("loginMsg");
 
-  const ok = (email === CONFIG.ADMIN_EMAIL && senha === CONFIG.ADMIN_SENHA);
-
-  if (ok) {
-    adminLogado = true;
-    localStorage.setItem(CONFIG.STORAGE_ADMIN, "1");
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
     closeModal("loginModal");
-    renderizarAdmin();
-  } else {
+    if (msg) msg.className = "msg";
+  } catch (e) {
     if (msg) {
       msg.className = "msg show error";
       msg.textContent = "❌ Login inválido";
       setTimeout(() => msg.classList.remove("show"), 2500);
     }
   }
-}
+};
 
-function adminSair() {
-  adminLogado = false;
-  localStorage.removeItem(CONFIG.STORAGE_ADMIN);
-  renderizarAdmin();
-}
+window.adminSair = async function adminSair() {
+  await signOut(auth);
+};
 
 function renderizarAdmin() {
   const locked = document.getElementById("adminLocked");
@@ -224,16 +263,14 @@ function renderizarAdmin() {
   const list = document.getElementById("adminList");
   if (!locked || !panel || !list) return;
 
-  if (!adminLogado) {
+  if (!adminUser) {
     locked.style.display = "block";
     panel.style.display = "none";
     return;
   }
 
-  locked.style.display = "none";
+  locked.style.display = "block";
   panel.style.display = "block";
-
-  produtos = carregarProdutos();
 
   list.innerHTML = produtos.map(p => `
     <div class="admin-item">
@@ -242,57 +279,73 @@ function renderizarAdmin() {
         <small>${escapeHtml(p.categoria || "Lingerie")} • R$ ${Number(p.preco).toFixed(2)}</small>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-secondary" onclick="adminRemoverProduto(${p.id})">Excluir</button>
+        <button class="btn btn-secondary" onclick="adminExcluirProduto('${p.id}')">Excluir</button>
       </div>
     </div>
   `).join("");
 }
 
-function adminAdicionarProduto() {
+window.adminExcluirProduto = async function adminExcluirProduto(id) {
+  if (!adminUser) return;
+  await deleteDoc(doc(db, "products", id));
+};
+
+window.adminAdicionarProduto = async function adminAdicionarProduto() {
+  if (!adminUser) return;
+
   const nome = (document.getElementById("pNome").value || "").trim();
   const categoria = (document.getElementById("pCategoria").value || "").trim() || "Lingerie";
   const preco = Number(document.getElementById("pPreco").value);
   const imagemUrl = (document.getElementById("pImagem").value || "").trim();
 
   if (!nome || !imagemUrl || !Number.isFinite(preco) || preco <= 0) {
-    alert("Preencha Nome, Preço e a URL da imagem (Cloudinary).");
+    alert("Preencha Nome, Preço e a imagem.");
     return;
   }
 
-  produtos = carregarProdutos();
-  const newId = produtos.length ? Math.max(...produtos.map(x => x.id)) + 1 : 1;
-
-  produtos.push({ id: newId, nome, categoria, preco, imagemUrl });
-  salvarProdutos(produtos);
+  await addDoc(collection(db, "products"), {
+    nome,
+    categoria,
+    preco,
+    imagemUrl,
+    criadoEm: serverTimestamp()
+  });
 
   document.getElementById("pNome").value = "";
   document.getElementById("pCategoria").value = "";
   document.getElementById("pPreco").value = "";
   document.getElementById("pImagem").value = "";
+};
 
-  renderizarAdmin();
-  renderizarProdutos();
-}
+// ---------- Cloudinary Upload ----------
+window.abrirUploadCloudinary = function abrirUploadCloudinary() {
+  const widget = cloudinary.createUploadWidget(
+    {
+      cloudName: CONFIG.CLOUDINARY.cloudName,
+      uploadPreset: CONFIG.CLOUDINARY.uploadPreset,
+      sources: ["local", "camera", "url"],
+      multiple: false
+    },
+    (error, result) => {
+      if (!error && result && result.event === "success") {
+        const url = result.info.secure_url;
+        const inp = document.getElementById("pImagem");
+        if (inp) inp.value = url;
+      }
+    }
+  );
 
-function adminRemoverProduto(id) {
-  produtos = carregarProdutos().filter(p => p.id !== id);
-  salvarProdutos(produtos);
+  widget.open();
+};
 
-  carrinho = carrinho.filter(x => x.id !== id);
-  salvarCarrinho();
-
-  renderizarAdmin();
-  renderizarProdutos();
-}
-
-// Admin escondido por hash: /#admin
+// ---------- Admin escondido ----------
 function checarHashAdmin() {
   const hash = (location.hash || "").replace("#", "");
   if (hash === "admin") showView("admin");
 }
 window.addEventListener("hashchange", checarHashAdmin);
 
-// Whats link
+// ---------- Contato ----------
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
   if (!el) return;
@@ -300,16 +353,15 @@ function updateWhatsLink() {
   el.textContent = `+${CONFIG.WHATSAPP}`;
 }
 
-// ---------- INIT garantido ----------
+// ---------- INIT ----------
+onAuthStateChanged(auth, (user) => {
+  adminUser = user || null;
+  renderizarAdmin();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
-  try {
-    produtos = carregarProdutos();
-    renderizarProdutos();
-    atualizarBadge();
-    updateWhatsLink();
-    checarHashAdmin();
-  } catch (e) {
-    const grid = document.getElementById("grid");
-    if (grid) grid.innerHTML = `<p style="text-align:center;color:#c0392b;font-weight:700;">Erro ao carregar produtos. Verifique products.js e a ordem dos scripts.</p>`;
-  }
+  updateWhatsLink();
+  atualizarBadge();
+  checarHashAdmin();
+  iniciarListenerProdutos();
 });

@@ -635,3 +635,87 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAdminHash();
   listenProdutos();
 });
+// ===== Modal Produto (abre só ao clicar no produto) =====
+window.openProduct = function openProduct(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+
+  // imagens[] (novo) ou imagemUrl (antigo)
+  pvImages =
+    Array.isArray(p.imagens) && p.imagens.length
+      ? p.imagens
+      : (p.imagemUrl ? [p.imagemUrl] : []);
+
+  pvIndex = 0;
+  pvProductId = p.id;
+
+  document.getElementById("pvTitle").textContent = p.nome || "Produto";
+  document.getElementById("pvCat").textContent = p.categoria || "";
+  document.getElementById("pvPrice").textContent = `R$ ${money(p.preco)}`;
+
+  const btn = document.getElementById("pvAddBtn");
+  btn.onclick = () => {
+    addToCart(pvProductId);
+    closeModal("productModal");
+  };
+
+  renderProductModal();
+  openModal("productModal");
+};
+
+function renderProductModal() {
+  const thumbs = document.getElementById("pvThumbs");
+  const main = document.getElementById("pvMainImg");
+
+  if (!pvImages.length) {
+    thumbs.innerHTML = "";
+    main.src = "";
+    return;
+  }
+
+  main.src = pvImages[pvIndex];
+
+  thumbs.innerHTML = pvImages.map((url, i) => `
+    <div class="pv-thumb ${i === pvIndex ? "active" : ""}" onclick="pvGo(${i})">
+      <img src="${url}" alt="">
+    </div>
+  `).join("");
+}
+
+window.pvGo = function pvGo(i) {
+  pvIndex = i;
+  renderProductModal();
+};
+
+window.pvNext = function pvNext() {
+  if (!pvImages.length) return;
+  pvIndex = (pvIndex + 1) % pvImages.length;
+  renderProductModal();
+};
+
+window.pvPrev = function pvPrev() {
+  if (!pvImages.length) return;
+  pvIndex = (pvIndex - 1 + pvImages.length) % pvImages.length;
+  renderProductModal();
+};
+
+// Swipe no modal (celular)
+document.addEventListener("touchstart", (e) => {
+  const stage = e.target.closest?.(".pv-stage");
+  if (!stage) return;
+  stage.dataset.sx = String(e.touches[0].clientX);
+}, { passive: true });
+
+document.addEventListener("touchend", (e) => {
+  const stage = e.target.closest?.(".pv-stage");
+  if (!stage) return;
+
+  const sx = Number(stage.dataset.sx || 0);
+  const ex = Number(e.changedTouches[0].clientX);
+  const diff = ex - sx;
+
+  if (Math.abs(diff) < 40) return;
+  if (diff < 0) pvNext();
+  else pvPrev();
+}, { passive: true });
+

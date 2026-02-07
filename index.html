@@ -10,7 +10,7 @@
   <!-- Fonte elegante -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <!-- Ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
@@ -26,7 +26,7 @@
     <header class="topbar">
       <div class="wrap topbar-inner">
         <a class="brand" href="#" onclick="showView('colecao', event)">
-          <div class="brand-mark">AB</div>
+          <img src="./logo.png" class="brand-logo" alt="Alma Bela">
           <div class="brand-text">
             <div class="brand-title">ALMA BELA</div>
             <div class="brand-sub">CATÁLOGO PREMIUM</div>
@@ -43,7 +43,7 @@
             <i class="fa-solid fa-bars"></i>
           </button>
 
-          <!-- aparece só se estiver logado -->
+          <!-- Aparece só se estiver logado -->
           <button class="btn-admin" id="adminBtn" style="display:none;" onclick="goAdmin()">
             <i class="fa-solid fa-user-shield"></i> Admin
           </button>
@@ -104,7 +104,7 @@
         </div>
       </section>
 
-      <!-- ADMIN (só aparece se logado) -->
+      <!-- ADMIN -->
       <section id="admin" class="section">
         <div class="wrap">
           <div class="box">
@@ -146,25 +146,32 @@
                 </div>
 
                 <div class="field">
-                  <label>Imagens (URLs do Cloudinary — 1 por linha)</label>
-                  <textarea id="pImagens" rows="5" placeholder="Clique em 'Importar fotos' para preencher automaticamente..."></textarea>
+                  <label>Fotos do produto</label>
 
-                  <div class="actions">
-                    <button class="btn outline" onclick="abrirUploadCloudinary()">
-                      <i class="fa-regular fa-image"></i> Importar fotos
-                    </button>
-                    <button class="btn outline" onclick="limparFotos()">
-                      <i class="fa-solid fa-eraser"></i> Limpar
-                    </button>
-                    <button class="btn primary" onclick="adminAdicionarProduto()">
-                      <i class="fa-solid fa-plus"></i> Salvar produto
-                    </button>
+                  <div class="admin-photos">
+                    <div class="photo-grid" id="photoGrid">
+                      <div class="photo-empty">Nenhuma foto importada</div>
+                    </div>
+
+                    <div class="actions">
+                      <button class="btn outline" onclick="abrirUploadCloudinary()">
+                        <i class="fa-regular fa-image"></i> Importar fotos
+                      </button>
+                      <button class="btn outline" onclick="limparFotos()">
+                        <i class="fa-solid fa-eraser"></i> Limpar
+                      </button>
+                      <button class="btn primary" onclick="adminAdicionarProduto()">
+                        <i class="fa-solid fa-plus"></i> Salvar produto
+                      </button>
+                    </div>
+
+                    <!-- escondido: aqui ficam as URLs internamente -->
+                    <textarea id="pImagens" style="display:none;"></textarea>
                   </div>
                 </div>
               </div>
 
               <hr class="hr">
-
               <div id="adminList" class="admin-list"></div>
             </div>
           </div>
@@ -194,9 +201,7 @@
           <input id="passInput" type="password" placeholder="Sua senha admin">
         </div>
 
-        <button class="btn primary full" onclick="adminLogin()">
-          Entrar
-        </button>
+        <button class="btn primary full" onclick="adminLogin()">Entrar</button>
       </div>
     </div>
   </div>
@@ -218,7 +223,7 @@
     </div>
   </div>
 
-  <!-- MODAL PRODUTO (abre só ao clicar no produto) -->
+  <!-- MODAL PRODUTO -->
   <div class="modal" id="productModal">
     <div class="modal-content modal-product">
       <div class="modal-header">
@@ -255,7 +260,6 @@
     </div>
   </div>
 
-  <!-- APP JS -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

@@ -1,38 +1,48 @@
-// -------------------- PRODUTOS (storage) --------------------
+// ---------- Helpers ----------
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// ---------- Produtos (storage) ----------
 function carregarProdutos() {
-  const saved = localStorage.getItem(CONFIG.STORAGE_PRODUTOS);
+  const key = CONFIG.STORAGE_PRODUTOS;
+  const saved = localStorage.getItem(key);
   if (saved) return JSON.parse(saved);
 
-  // seed automático pra sempre aparecer produto
-  localStorage.setItem(CONFIG.STORAGE_PRODUTOS, JSON.stringify(DEFAULT_PRODUCTS));
-  return DEFAULT_PRODUCTS;
+  const seed = window.DEFAULT_PRODUCTS || [];
+  localStorage.setItem(key, JSON.stringify(seed));
+  return seed;
 }
 
 function salvarProdutos(produtos) {
   localStorage.setItem(CONFIG.STORAGE_PRODUTOS, JSON.stringify(produtos));
 }
 
-// -------------------- CARRINHO --------------------
+// ---------- Carrinho ----------
 let carrinho = JSON.parse(localStorage.getItem(CONFIG.STORAGE_CARRINHO)) || [];
-let produtos = carregarProdutos();
+let produtos = [];
 let adminLogado = localStorage.getItem(CONFIG.STORAGE_ADMIN) === "1";
 
-// -------------------- MENU MOBILE --------------------
+// ---------- Menu mobile ----------
 function toggleMenu() {
   const nav = document.getElementById("navMenu");
-  nav.classList.toggle("open");
+  if (nav) nav.classList.toggle("open");
 }
-
-// fecha menu quando clica em algum link
 function fecharMenu() {
   const nav = document.getElementById("navMenu");
-  nav.classList.remove("open");
+  if (nav) nav.classList.remove("open");
 }
 
-// -------------------- VIEW --------------------
+// ---------- Views ----------
 function showView(nome, ev) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.getElementById(nome).classList.add("active");
+  const target = document.getElementById(nome);
+  if (target) target.classList.add("active");
 
   document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
   if (ev && ev.target && ev.target.classList.contains("nav-link")) ev.target.classList.add("active");
@@ -43,9 +53,11 @@ function showView(nome, ev) {
   if (nome === "admin") renderizarAdmin();
 }
 
-// -------------------- RENDER PRODUTOS --------------------
+// ---------- Render Produtos ----------
 function renderizarProdutos() {
   const grid = document.getElementById("grid");
+  if (!grid) return;
+
   produtos = carregarProdutos();
 
   if (!produtos || produtos.length === 0) {
@@ -66,7 +78,17 @@ function renderizarProdutos() {
   `).join("");
 }
 
-// -------------------- CARRINHO --------------------
+// ---------- Carrinho UI ----------
+function salvarCarrinho() {
+  localStorage.setItem(CONFIG.STORAGE_CARRINHO, JSON.stringify(carrinho));
+  atualizarBadge();
+}
+
+function atualizarBadge() {
+  const badge = document.getElementById("badge");
+  if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
+}
+
 function adicionarAoCarrinho(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
@@ -79,16 +101,6 @@ function adicionarAoCarrinho(id) {
   openCart();
 }
 
-function salvarCarrinho() {
-  localStorage.setItem(CONFIG.STORAGE_CARRINHO, JSON.stringify(carrinho));
-  atualizarBadge();
-}
-
-function atualizarBadge() {
-  const badge = document.getElementById("badge");
-  if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
-}
-
 function openCart() {
   renderizarCarrinho();
   openModal("cartModal");
@@ -96,6 +108,7 @@ function openCart() {
 
 function renderizarCarrinho() {
   const list = document.getElementById("cartList");
+  if (!list) return;
 
   if (!carrinho.length) {
     list.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><p>Seu carrinho está vazio</p></div>`;
@@ -158,18 +171,20 @@ function finalizarWhatsApp() {
   window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
-// -------------------- MODAIS --------------------
+// ---------- Modais ----------
 function openModal(id) {
-  document.getElementById(id).classList.add("active");
+  const el = document.getElementById(id);
+  if (el) el.classList.add("active");
 }
 function closeModal(id) {
-  document.getElementById(id).classList.remove("active");
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("active");
 }
 document.addEventListener("click", e => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
-// -------------------- ADMIN (ESCONDIDO) --------------------
+// ---------- Admin (escondido) ----------
 function openLogin() {
   const msg = document.getElementById("loginMsg");
   if (msg) msg.className = "msg";
@@ -188,16 +203,12 @@ function adminLogin() {
     localStorage.setItem(CONFIG.STORAGE_ADMIN, "1");
     closeModal("loginModal");
     renderizarAdmin();
-    mostrarMsg("✅ Logado com sucesso!", "success");
   } else {
-    mostrarMsg("❌ Login inválido", "error");
-  }
-
-  function mostrarMsg(texto, tipo) {
-    if (!msg) return;
-    msg.className = `msg show ${tipo}`;
-    msg.textContent = texto;
-    setTimeout(() => msg.classList.remove("show"), 2500);
+    if (msg) {
+      msg.className = "msg show error";
+      msg.textContent = "❌ Login inválido";
+      setTimeout(() => msg.classList.remove("show"), 2500);
+    }
   }
 }
 
@@ -267,7 +278,6 @@ function adminRemoverProduto(id) {
   produtos = carregarProdutos().filter(p => p.id !== id);
   salvarProdutos(produtos);
 
-  // remove do carrinho se existir
   carrinho = carrinho.filter(x => x.id !== id);
   salvarCarrinho();
 
@@ -275,17 +285,31 @@ function adminRemoverProduto(id) {
   renderizarProdutos();
 }
 
-// -------------------- ADMIN ESCONDIDO (ACESSO POR URL) --------------------
-// Para abrir: https://seusite.com/#admin
+// Admin escondido por hash: /#admin
 function checarHashAdmin() {
   const hash = (location.hash || "").replace("#", "");
-  if (hash === "admin") {
-    showView("admin");
-  }
+  if (hash === "admin") showView("admin");
 }
 window.addEventListener("hashchange", checarHashAdmin);
 
-// -------------------- WHATS LINK --------------------
+// Whats link
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
-  if (!el) retur
+  if (!el) return;
+  el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
+  el.textContent = `+${CONFIG.WHATSAPP}`;
+}
+
+// ---------- INIT garantido ----------
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    produtos = carregarProdutos();
+    renderizarProdutos();
+    atualizarBadge();
+    updateWhatsLink();
+    checarHashAdmin();
+  } catch (e) {
+    const grid = document.getElementById("grid");
+    if (grid) grid.innerHTML = `<p style="text-align:center;color:#c0392b;font-weight:700;">Erro ao carregar produtos. Verifique products.js e a ordem dos scripts.</p>`;
+  }
+});

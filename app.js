@@ -1,34 +1,32 @@
 /* =========================================================
-   ALMA BELA - APP.JS COMPLETO
-   Firebase Firestore (produtos) + Cloudinary (imagens)
-   Modal Produto + Carrossel + Admin escondido por #admin
+   ALMA BELA - app.js (MODULE)
+   Firebase Auth (admin) + Firestore (produtos)
+   Cloudinary (múltiplas imagens)
+   Modal produto (Nike-like) + carrinho + WhatsApp
 ========================================================= */
 
 /* =========================
-   CONFIGS
+   CONFIG
 ========================= */
-
-// WhatsApp do pedido
 const WHATSAPP = "5521979405145";
 
-// Cloudinary
-const CLOUDINARY_CLOUD_NAME = "doi067uao";
-const CLOUDINARY_UPLOAD_PRESET = "Unsigned";
+// >>> TROQUE AQUI (Cloudinary)
+const CLOUDINARY_CLOUD_NAME = "SEU_CLOUD_NAME";
+const CLOUDINARY_UPLOAD_PRESET = "SEU_UPLOAD_PRESET";
 
-// Coleção Firestore
+// Firestore collection
 const COLLECTION = "products";
 
 /* =========================
-   FIREBASE
+   Firebase imports
 ========================= */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+
 import {
   getFirestore,
   collection,
   addDoc,
   deleteDoc,
-  updateDoc,
   doc,
   onSnapshot,
   query,
@@ -43,6 +41,9 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
+/* =========================
+   Firebase config
+========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -58,33 +59,29 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 /* =========================
-   ESTADOS
+   STATE
 ========================= */
+let adminUser = null;
 
 let produtos = [];
 let produtosFiltrados = [];
 
 let carrinho = JSON.parse(localStorage.getItem("almabela_cart")) || [];
 
-let adminUser = null;
+let adminImages = []; // URLs (Cloudinary) só no JS, sem textarea
 
-// Modal Produto
+// product viewer modal state
 let pvImages = [];
 let pvIndex = 0;
 let pvProductId = null;
 
-// Admin imagens temporárias (não mostra URL)
-let adminImages = [];
-
 /* =========================
    HELPERS
 ========================= */
-
 function money(v) {
   const n = Number(v || 0);
   return n.toFixed(2).replace(".", ",");
 }
-
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")
@@ -93,31 +90,36 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-
 function saveCart() {
   localStorage.setItem("almabela_cart", JSON.stringify(carrinho));
   updateBadge();
 }
-
 function updateBadge() {
   const badge = document.getElementById("badge");
   if (!badge) return;
   badge.textContent = carrinho.reduce((s, x) => s + (x.qtd || 0), 0);
 }
+function openModal(id) {
+  document.getElementById(id)?.classList.add("active");
+}
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove("active");
+}
+function setYear() {
+  const fy = document.getElementById("footerYear");
+  if (fy) fy.textContent = new Date().getFullYear();
+}
 
 /* =========================
-   VIEW / ROUTE
+   ROUTES / VIEW
 ========================= */
-
-window.showView = function showView(name, ev) {
+function showView(name, ev) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  const sec = document.getElementById(name);
-  if (sec) sec.classList.add("active");
+  document.getElementById(name)?.classList.add("active");
 
-  // ativa menu se tiver
   document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
   if (ev?.target?.classList?.contains("nav-link")) ev.target.classList.add("active");
-};
+}
 
 function goToHashRoute() {
   const hash = (location.hash || "").replace("#", "").trim();
@@ -127,46 +129,32 @@ function goToHashRoute() {
     if (!adminUser) openLogin();
     return;
   }
-
   if (hash === "sobre") {
     showView("sobre");
     return;
   }
-
   showView("colecao");
 }
 
 /* =========================
-   MODAIS
+   MODAL CLICK OUTSIDE
 ========================= */
-
-window.openModal = function openModal(id) {
-  document.getElementById(id)?.classList.add("active");
-};
-
-window.closeModal = function closeModal(id) {
-  document.getElementById(id)?.classList.remove("active");
-};
-
-// Fecha clicando fora
 document.addEventListener("click", (e) => {
   if (e.target.classList?.contains("modal")) e.target.classList.remove("active");
 });
 
 /* =========================
-   PRODUTOS (FIRESTORE)
+   FIRESTORE LISTENER
 ========================= */
-
 function listenProdutos() {
   const q = query(collection(db, COLLECTION), orderBy("createdAt", "desc"));
 
   onSnapshot(q, (snap) => {
     produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // filtro padrão
     produtosFiltrados = [...produtos];
 
-    renderProdutos();
+    fillCategories();
+    applyFilters();
     renderAdminList();
 
     const adminCount = document.getElementById("adminCount");
@@ -175,9 +163,35 @@ function listenProdutos() {
 }
 
 /* =========================
-   CARROSSEL (CARD)
+   FILTERS
 ========================= */
+function fillCategories() {
+  const sel = document.getElementById("catSelect");
+  if (!sel) return;
 
+  const current = sel.value;
+  const cats = [...new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))].sort();
+
+  sel.innerHTML = `<option value="">Todas as categorias</option>` + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  sel.value = current;
+}
+
+function applyFilters() {
+  const q = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+  const cat = (document.getElementById("catSelect")?.value || "").trim();
+
+  produtosFiltrados = produtos.filter(p => {
+    const okName = !q || (p.nome || "").toLowerCase().includes(q);
+    const okCat = !cat || (p.categoria || "") === cat;
+    return okName && okCat;
+  });
+
+  renderProdutos();
+}
+
+/* =========================
+   CARD CAROUSEL
+========================= */
 function renderCarousel(p) {
   const imgs =
     Array.isArray(p.imagens) && p.imagens.length
@@ -185,15 +199,10 @@ function renderCarousel(p) {
       : (p.imagemUrl ? [p.imagemUrl] : []);
 
   if (!imgs.length) {
-    return `
-      <div class="carousel">
-        <div style="padding:16px;color:#777;font-weight:700;">Sem imagem</div>
-      </div>
-    `;
+    return `<div class="carousel"><div style="padding:16px;color:#777;font-weight:800;">Sem imagem</div></div>`;
   }
 
   const id = `c_${p.id}`;
-
   return `
     <div class="carousel" id="${id}" data-index="0">
       <div class="carousel-track" style="transform:translateX(0%);">
@@ -209,79 +218,63 @@ function renderCarousel(p) {
         </button>
 
         <div class="carousel-dots" onclick="event.stopPropagation();">
-          ${imgs.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}" onclick="carouselGo('${id}', ${i})"></div>`).join("")}
+          ${imgs.map((_, i) => `<div class="dot ${i===0?'active':''}" onclick="carouselGo('${id}', ${i})"></div>`).join("")}
         </div>
       ` : ""}
     </div>
   `;
 }
-
-window.carouselGo = function carouselGo(id, index) {
+function carouselGo(id, index) {
   const el = document.getElementById(id);
   if (!el) return;
 
   const track = el.querySelector(".carousel-track");
   const dots = el.querySelectorAll(".dot");
-
   el.dataset.index = String(index);
+
   track.style.transform = `translateX(-${index * 100}%)`;
-
   dots.forEach((d, i) => d.classList.toggle("active", i === index));
-};
-
-window.carouselNext = function carouselNext(id) {
+}
+function carouselNext(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  const track = el.querySelector(".carousel-track");
-  const imgs = track.querySelectorAll(".carousel-img");
-  const total = imgs.length;
-
+  const total = el.querySelectorAll(".carousel-img").length;
   let idx = Number(el.dataset.index || 0);
   idx = (idx + 1) % total;
   carouselGo(id, idx);
-};
-
-window.carouselPrev = function carouselPrev(id) {
+}
+function carouselPrev(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  const track = el.querySelector(".carousel-track");
-  const imgs = track.querySelectorAll(".carousel-img");
-  const total = imgs.length;
-
+  const total = el.querySelectorAll(".carousel-img").length;
   let idx = Number(el.dataset.index || 0);
   idx = (idx - 1 + total) % total;
   carouselGo(id, idx);
-};
+}
 
 /* =========================
-   RENDER PRODUTOS (CATÁLOGO)
+   RENDER PRODUTOS
 ========================= */
-
 function renderProdutos() {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
-  const list = produtosFiltrados;
-
-  if (!list.length) {
-    grid.innerHTML = `<div class="box"><p>Nenhum produto encontrado.</p></div>`;
+  if (!produtosFiltrados.length) {
+    grid.innerHTML = `<div class="box"><p class="muted">Nenhum produto encontrado.</p></div>`;
     return;
   }
 
-  grid.innerHTML = list.map(p => `
+  grid.innerHTML = produtosFiltrados.map(p => `
     <article class="product" onclick="openProduct('${p.id}')">
       ${renderCarousel(p)}
-
-      <div class="product-body" onclick="event.stopPropagation()">
+      <div class="product-body">
         <div class="product-meta">
           <span class="tag">${escapeHtml(p.categoria || "Lingerie")}</span>
           <span class="price">R$ ${money(p.preco)}</span>
         </div>
-
         <div class="title">${escapeHtml(p.nome)}</div>
-
-        <button class="btn primary full" onclick="addToCart('${p.id}')">
-          Adicionar
+        <button class="btn primary full" onclick="addToCart('${p.id}'); event.stopPropagation();">
+          <i class="fa-solid fa-plus"></i> Adicionar
         </button>
       </div>
     </article>
@@ -289,10 +282,9 @@ function renderProdutos() {
 }
 
 /* =========================
-   MODAL PRODUTO (VISUALIZAÇÃO)
+   MODAL PRODUTO (NIKE-LIKE)
 ========================= */
-
-window.openProduct = function openProduct(id) {
+function openProduct(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
@@ -316,8 +308,7 @@ window.openProduct = function openProduct(id) {
 
   renderProductModal();
   openModal("productModal");
-};
-
+}
 function renderProductModal() {
   const thumbs = document.getElementById("pvThumbs");
   const main = document.getElementById("pvMainImg");
@@ -329,56 +320,49 @@ function renderProductModal() {
   }
 
   main.src = pvImages[pvIndex];
-
   thumbs.innerHTML = pvImages.map((url, i) => `
-    <div class="pv-thumb ${i === pvIndex ? "active" : ""}" onclick="pvGo(${i})">
+    <div class="pv-thumb ${i===pvIndex?'active':''}" onclick="pvGo(${i})">
       <img src="${url}" alt="">
     </div>
   `).join("");
 }
-
-window.pvGo = function pvGo(i) {
-  pvIndex = i;
-  renderProductModal();
-};
-
-window.pvNext = function pvNext() {
+function pvGo(i) { pvIndex = i; renderProductModal(); }
+function pvNext() {
   if (!pvImages.length) return;
   pvIndex = (pvIndex + 1) % pvImages.length;
   renderProductModal();
-};
-
-window.pvPrev = function pvPrev() {
+}
+function pvPrev() {
   if (!pvImages.length) return;
   pvIndex = (pvIndex - 1 + pvImages.length) % pvImages.length;
   renderProductModal();
-};
+}
 
-// Swipe no modal (celular)
+// swipe (celular)
 document.addEventListener("touchstart", (e) => {
   const stage = e.target.closest?.(".pv-stage");
   if (!stage) return;
   stage.dataset.sx = String(e.touches[0].clientX);
-}, { passive: true });
+}, { passive:true });
 
 document.addEventListener("touchend", (e) => {
   const stage = e.target.closest?.(".pv-stage");
   if (!stage) return;
-
   const sx = Number(stage.dataset.sx || 0);
   const ex = Number(e.changedTouches[0].clientX);
   const diff = ex - sx;
-
   if (Math.abs(diff) < 40) return;
-  if (diff < 0) pvNext();
-  else pvPrev();
-}, { passive: true });
+  diff < 0 ? pvNext() : pvPrev();
+}, { passive:true });
 
 /* =========================
-   CARRINHO
+   CART
 ========================= */
-
-window.addToCart = function addToCart(id) {
+function openCart() {
+  renderCart();
+  openModal("cartModal");
+}
+function addToCart(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
@@ -392,19 +376,13 @@ window.addToCart = function addToCart(id) {
 
   saveCart();
   openCart();
-};
-
-window.openCart = function openCart() {
-  renderCart();
-  openModal("cartModal");
-};
-
+}
 function renderCart() {
   const list = document.getElementById("cartList");
   if (!list) return;
 
   if (!carrinho.length) {
-    list.innerHTML = `<div class="empty"><p>Carrinho vazio</p></div>`;
+    list.innerHTML = `<div class="empty">Carrinho vazio</div>`;
     return;
   }
 
@@ -414,8 +392,8 @@ function renderCart() {
     <div class="cart-items">
       ${carrinho.map((x, i) => `
         <div class="cart-item">
-          <img src="${x.imagemUrl || ""}" class="cart-img" alt="">
-          <div class="cart-details">
+          <img class="cart-img" src="${x.imagemUrl || ''}" alt="">
+          <div style="flex:1">
             <div class="cart-name">${escapeHtml(x.nome)}</div>
             <div class="cart-price">R$ ${money(x.preco)}</div>
 
@@ -423,7 +401,7 @@ function renderCart() {
               <button class="qty-btn" onclick="updateQty(${i}, -1)">−</button>
               <span class="qty-val">${x.qtd}</span>
               <button class="qty-btn" onclick="updateQty(${i}, 1)">+</button>
-              <button class="remove-btn" onclick="removeCart(${i})">Remover</button>
+              <button class="remove-btn" onclick="removeCartItem(${i})">Remover</button>
             </div>
           </div>
         </div>
@@ -437,28 +415,24 @@ function renderCart() {
     </div>
   `;
 }
-
-window.updateQty = function updateQty(idx, change) {
+function updateQty(idx, change) {
   carrinho[idx].qtd += change;
   if (carrinho[idx].qtd <= 0) carrinho.splice(idx, 1);
   saveCart();
   renderCart();
-};
-
-window.removeCart = function removeCart(idx) {
+}
+function removeCartItem(idx) {
   carrinho.splice(idx, 1);
   saveCart();
   renderCart();
-};
-
-window.doCheckout = function doCheckout() {
+}
+function doCheckout() {
   if (!carrinho.length) return;
 
   let msg = "🛍️ Novo Pedido Alma Bela\n\n";
   carrinho.forEach((x, i) => {
     msg += `${i + 1}. ${x.nome}\nR$ ${money(x.preco)} × ${x.qtd} = R$ ${money(x.preco * x.qtd)}\n\n`;
   });
-
   const total = carrinho.reduce((s, x) => s + (x.preco * x.qtd), 0);
   msg += `💰 Total: R$ ${money(total)}\n\n✨ Obrigado!`;
 
@@ -467,17 +441,18 @@ window.doCheckout = function doCheckout() {
   carrinho = [];
   saveCart();
   closeModal("cartModal");
-};
+}
 
 /* =========================
-   ADMIN LOGIN + PAINEL
+   ADMIN (AUTH)
 ========================= */
-
-window.openLogin = function openLogin() {
+function openLogin() {
+  const el = document.getElementById("loginMsg");
+  if (el) el.className = "msg";
   openModal("loginModal");
-};
+}
 
-window.doLogin = async function doLogin(e) {
+async function doLogin(e) {
   e.preventDefault();
 
   const email = document.getElementById("emailInput").value.trim();
@@ -490,20 +465,23 @@ window.doLogin = async function doLogin(e) {
     const el = document.getElementById("loginMsg");
     if (el) {
       el.className = "msg show error";
-      el.textContent = "Credenciais inválidas ou acesso bloqueado.";
+      el.textContent = "Credenciais inválidas ou sem permissão.";
     }
   }
-};
+}
 
-window.adminSair = async function adminSair() {
+async function adminLogout() {
   await signOut(auth);
-  location.hash = "";
+  location.hash = "colecao";
   showView("colecao");
-};
+}
 
-function renderAdmin() {
+function renderAdminUI() {
   const locked = document.getElementById("adminLocked");
   const panel = document.getElementById("adminPanel");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (logoutBtn) logoutBtn.style.display = adminUser ? "inline-flex" : "none";
 
   if (!locked || !panel) return;
 
@@ -512,34 +490,38 @@ function renderAdmin() {
     panel.style.display = "none";
     return;
   }
+  locked.style.display = "block";
+  panel.style.display = "block";
 
   locked.style.display = "none";
-  panel.style.display = "block";
 }
 
+/* Admin button in header */
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
 
-  // Botão admin no topo (se existir)
   const adminBtn = document.getElementById("adminBtn");
-  if (adminBtn) adminBtn.style.display = adminUser ? "flex" : "none";
+  if (adminBtn) adminBtn.style.display = adminUser ? "inline-flex" : "none";
 
-  renderAdmin();
+  renderAdminUI();
+  renderAdminList();
   goToHashRoute();
 });
 
 /* =========================
-   ADMIN - UPLOAD CLOUDINARY
+   ADMIN - CLOUDINARY UPLOAD
 ========================= */
-
-window.abrirUploadCloudinary = function abrirUploadCloudinary() {
+function abrirUploadCloudinary() {
   if (!adminUser) {
     alert("Faça login para importar fotos.");
     return;
   }
-
   if (!window.cloudinary) {
     alert("Cloudinary widget não carregou.");
+    return;
+  }
+  if (CLOUDINARY_CLOUD_NAME === "SEU_CLOUD_NAME" || CLOUDINARY_UPLOAD_PRESET === "SEU_UPLOAD_PRESET") {
+    alert("Configure CLOUDINARY_CLOUD_NAME e CLOUDINARY_UPLOAD_PRESET no app.js");
     return;
   }
 
@@ -557,7 +539,6 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
     },
     (error, result) => {
       if (error) return;
-
       if (result.event === "success") {
         const url = result.info.secure_url;
         if (url) {
@@ -569,14 +550,14 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   );
 
   widget.open();
-};
+}
 
 function renderAdminPhotos() {
   const grid = document.getElementById("photoGrid");
   if (!grid) return;
 
   if (!adminImages.length) {
-    grid.innerHTML = `<div class="muted" style="font-weight:800;">Nenhuma foto adicionada.</div>`;
+    grid.innerHTML = `<div class="muted">Nenhuma foto adicionada.</div>`;
     return;
   }
 
@@ -588,21 +569,20 @@ function renderAdminPhotos() {
   `).join("");
 }
 
-window.removerFoto = function removerFoto(i) {
+function removerFoto(i) {
   adminImages.splice(i, 1);
   renderAdminPhotos();
-};
+}
 
-window.limparFotos = function limparFotos() {
+function limparFotos() {
   adminImages = [];
   renderAdminPhotos();
-};
+}
 
 /* =========================
-   ADMIN - SALVAR PRODUTO
+   ADMIN - SAVE PRODUCT
 ========================= */
-
-window.adminAdicionarProduto = async function adminAdicionarProduto() {
+async function adminAdicionarProduto() {
   if (!adminUser) {
     alert("Você precisa estar logado.");
     return;
@@ -616,7 +596,6 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
     alert("Preencha nome, categoria e preço.");
     return;
   }
-
   if (!adminImages.length) {
     alert("Importe pelo menos 1 foto.");
     return;
@@ -643,12 +622,11 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
     console.error(err);
     alert("Erro ao salvar. Veja o console.");
   }
-};
+}
 
 /* =========================
-   ADMIN - LISTAR E EXCLUIR
+   ADMIN - LIST / DELETE
 ========================= */
-
 function renderAdminList() {
   const list = document.getElementById("adminList");
   if (!list) return;
@@ -664,33 +642,24 @@ function renderAdminList() {
   }
 
   list.innerHTML = produtos.map(p => {
-    const imgs =
-      Array.isArray(p.imagens) && p.imagens.length
-        ? p.imagens
-        : (p.imagemUrl ? [p.imagemUrl] : []);
-
+    const imgs = Array.isArray(p.imagens) ? p.imagens : [];
     return `
       <div class="admin-item">
-        <div class="admin-mini">
-          <img src="${imgs[0] || ""}" alt="">
-        </div>
-
+        <div class="admin-mini"><img src="${imgs[0] || ''}" alt=""></div>
         <div class="admin-info">
           <div class="admin-name">${escapeHtml(p.nome)}</div>
-          <div class="admin-meta">${escapeHtml(p.categoria || "")} • R$ ${money(p.preco)}</div>
+          <div class="admin-meta">${escapeHtml(p.categoria || '')} • R$ ${money(p.preco)}</div>
         </div>
-
         <button class="btn danger" onclick="adminExcluir('${p.id}')">
-          Excluir
+          <i class="fa-solid fa-trash"></i>
         </button>
       </div>
     `;
   }).join("");
 }
 
-window.adminExcluir = async function adminExcluir(id) {
+async function adminExcluir(id) {
   if (!adminUser) return;
-
   if (!confirm("Deseja excluir este produto?")) return;
 
   try {
@@ -700,42 +669,56 @@ window.adminExcluir = async function adminExcluir(id) {
     console.error(err);
     alert("Erro ao excluir. Veja o console.");
   }
-};
+}
 
 /* =========================
    INIT
 ========================= */
-
 document.addEventListener("DOMContentLoaded", () => {
+  setYear();
   updateBadge();
+
+  // filtros
+  document.getElementById("searchInput")?.addEventListener("input", applyFilters);
+  document.getElementById("catSelect")?.addEventListener("change", applyFilters);
+
   listenProdutos();
+
   goToHashRoute();
   window.addEventListener("hashchange", goToHashRoute);
-
-  // Admin fotos inicial
   renderAdminPhotos();
-
-  // Ano do footer se existir
-  const fy = document.getElementById("footerYear");
-  if (fy) fy.textContent = new Date().getFullYear();
 });
-// ======= EXPOR FUNÇÕES NO ESCOPO GLOBAL (necessário por causa do type="module") =======
-window.adminLogin = adminLogin;
-window.openAdmin = openAdmin;
-window.closeAdmin = closeAdmin;
-window.adminLogout = adminLogout;
 
-window.openProductModal = openProductModal;
-window.closeProductModal = closeProductModal;
+/* =========================================================
+   EXPOSE GLOBALS (onclick em HTML)
+========================================================= */
+window.showView = showView;
 
-window.addToCart = addToCart;
 window.openCart = openCart;
-window.closeCart = closeCart;
-
+window.addToCart = addToCart;
 window.updateQty = updateQty;
 window.removeCartItem = removeCartItem;
-window.checkoutWhatsapp = checkoutWhatsapp;
+window.doCheckout = doCheckout;
 
-window.carouselPrev = carouselPrev;
-window.carouselNext = carouselNext;
+window.openLogin = openLogin;
+window.doLogin = doLogin;
+window.adminLogout = adminLogout;
+
+window.abrirUploadCloudinary = abrirUploadCloudinary;
+window.limparFotos = limparFotos;
+window.removerFoto = removerFoto;
+
+window.adminAdicionarProduto = adminAdicionarProduto;
+window.adminExcluir = adminExcluir;
+
+window.openProduct = openProduct;
+window.pvGo = pvGo;
+window.pvNext = pvNext;
+window.pvPrev = pvPrev;
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+
 window.carouselGo = carouselGo;
+window.carouselNext = carouselNext;
+window.carouselPrev = carouselPrev;

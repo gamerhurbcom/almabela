@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 /* ==========================
-   CONFIG
+   CONFIG (TROQUE O CLOUDINARY)
 ========================== */
 const CONFIG = {
   NOME_LOJA: "ALMA BELA",
@@ -41,6 +41,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 const productsRef = collection(db, "products");
 
 /* ==========================
@@ -65,6 +66,18 @@ function escapeHtml(str) {
 function money(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+}
+
+/* Mensagens (usa a caixa loginMsg) */
+function toast(texto, isError = false) {
+  const box = document.getElementById("loginMsg");
+  if (!box) return;
+  box.textContent = texto;
+  box.style.display = "block";
+  box.style.borderColor = isError ? "rgba(226,74,59,.35)" : "rgba(60,170,90,.35)";
+  box.style.background = isError ? "rgba(226,74,59,.10)" : "rgba(60,170,90,.10)";
+  box.style.color = isError ? "#7a1f1b" : "#145a2a";
+  setTimeout(() => (box.style.display = "none"), 2200);
 }
 
 /* ==========================
@@ -101,12 +114,10 @@ window.openModal = function openModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
 };
-
 window.closeModal = function closeModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove("active");
 };
-
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
@@ -190,7 +201,6 @@ function saveCart() {
   localStorage.setItem("almabela_cart", JSON.stringify(carrinho));
   updateBadge();
 }
-
 function updateBadge() {
   const badge = document.getElementById("badge");
   if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
@@ -272,8 +282,7 @@ window.finalizarWhatsApp = function finalizarWhatsApp() {
 
   let msg = `Pedido - ${CONFIG.NOME_LOJA}\n\n`;
   carrinho.forEach((x, i) => {
-    const linha = `${i + 1}. ${x.nome}\nR$ ${money(x.preco)} x ${x.qtd} = R$ ${money(Number(x.preco) * x.qtd)}\n\n`;
-    msg += linha;
+    msg += `${i + 1}. ${x.nome}\nR$ ${money(x.preco)} x ${x.qtd} = R$ ${money(Number(x.preco) * x.qtd)}\n\n`;
   });
 
   const total = carrinho.reduce((s, x) => s + (Number(x.preco) * x.qtd), 0);
@@ -294,21 +303,24 @@ window.openLogin = function openLogin() {
 window.adminLogin = async function adminLogin() {
   const email = (document.getElementById("emailInput")?.value || "").trim();
   const pass = (document.getElementById("passInput")?.value || "").trim();
-  const msg = document.getElementById("loginMsg");
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
     closeModal("loginModal");
+    toast("Login realizado com sucesso.");
+    // se estiver tentando acessar admin, abre o painel
+    checkAdminHash();
   } catch (e) {
-    if (msg) {
-      msg.textContent = "Credenciais inválidas.";
-      msg.style.display = "block";
-    }
+    toast("Credenciais inválidas.", true);
   }
 };
 
 window.adminSair = async function adminSair() {
   await signOut(auth);
+  toast("Sessão encerrada.");
+  // volta pra coleção e remove #admin se existir
+  history.replaceState(null, "", "#");
+  showView("colecao");
 };
 
 function renderAdmin() {
@@ -344,7 +356,11 @@ function renderAdmin() {
 }
 
 window.adminAdicionarProduto = async function adminAdicionarProduto() {
-  if (!adminUser) return;
+  if (!adminUser) {
+    toast("Acesso negado. Faça login.", true);
+    openLogin();
+    return;
+  }
 
   const nome = (document.getElementById("pNome")?.value || "").trim();
   const categoria = (document.getElementById("pCategoria")?.value || "").trim() || "Lingerie";
@@ -352,35 +368,59 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   const imagemUrl = (document.getElementById("pImagem")?.value || "").trim();
 
   if (!nome || !imagemUrl || !Number.isFinite(preco) || preco <= 0) {
-    alert("Preencha nome, categoria, preço e imagem.");
+    toast("Preencha nome, categoria, preço e imagem.", true);
     return;
   }
 
-  await addDoc(collection(db, "products"), {
-    nome,
-    categoria,
-    preco,
-    imagemUrl,
-    criadoEm: serverTimestamp()
-  });
+  try {
+    await addDoc(collection(db, "products"), {
+      nome,
+      categoria,
+      preco,
+      imagemUrl,
+      criadoEm: serverTimestamp()
+    });
 
-  document.getElementById("pNome").value = "";
-  document.getElementById("pCategoria").value = "";
-  document.getElementById("pPreco").value = "";
-  document.getElementById("pImagem").value = "";
+    document.getElementById("pNome").value = "";
+    document.getElementById("pCategoria").value = "";
+    document.getElementById("pPreco").value = "";
+    document.getElementById("pImagem").value = "";
+
+    toast("Produto cadastrado com sucesso.");
+    showView("admin"); // mantém no painel
+  } catch (e) {
+    toast("Permissão insuficiente no Firestore (Rules).", true);
+  }
 };
 
 window.adminExcluirProduto = async function adminExcluirProduto(id) {
-  if (!adminUser) return;
-  await deleteDoc(doc(db, "products", id));
+  if (!adminUser) {
+    toast("Acesso negado. Faça login.", true);
+    openLogin();
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "products", id));
+    toast("Produto excluído com sucesso.");
+  } catch (e) {
+    toast("Permissão insuficiente no Firestore (Rules).", true);
+  }
 };
 
 /* ==========================
    CLOUDINARY (UPLOAD GALERIA)
 ========================== */
 window.abrirUploadCloudinary = function abrirUploadCloudinary() {
-  if (!CONFIG.CLOUDINARY.cloudName || !CONFIG.CLOUDINARY.uploadPreset) {
-    alert("Configure cloudName e uploadPreset no app.js");
+  if (!adminUser) {
+    toast("Acesso negado. Faça login.", true);
+    openLogin();
+    return;
+  }
+
+  if (!CONFIG.CLOUDINARY.cloudName || !CONFIG.CLOUDINARY.uploadPreset ||
+      CONFIG.CLOUDINARY.cloudName.includes("AQUI") || CONFIG.CLOUDINARY.uploadPreset.includes("AQUI")) {
+    toast("Configure cloudName e uploadPreset no app.js.", true);
     return;
   }
 
@@ -396,6 +436,7 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
         const url = result.info.secure_url;
         const input = document.getElementById("pImagem");
         if (input) input.value = url;
+        toast("Imagem enviada com sucesso.");
       }
     }
   );
@@ -404,11 +445,21 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
 };
 
 /* ==========================
-   ADMIN ESCONDIDO
+   ADMIN ESCONDIDO / BLOQUEADO
 ========================== */
 function checkAdminHash() {
   const hash = (location.hash || "").replace("#", "");
-  if (hash === "admin") window.showView("admin");
+
+  if (hash === "admin") {
+    if (!adminUser) {
+      // tira o #admin e manda pra coleção
+      history.replaceState(null, "", "#");
+      showView("colecao");
+      openLogin(); // abre login automaticamente
+      return;
+    }
+    showView("admin");
+  }
 }
 window.addEventListener("hashchange", checkAdminHash);
 
@@ -429,6 +480,7 @@ function setYear() {
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
   renderAdmin();
+  checkAdminHash(); // se estiver logado e for #admin, libera
 });
 
 document.addEventListener("DOMContentLoaded", () => {

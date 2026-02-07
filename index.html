@@ -223,6 +223,45 @@
   </div>
 
   <!-- APP -->
+ <!-- MODAL PRODUTO (abre só ao clicar no produto) -->
+<div class="modal" id="productModal">
+  <div class="modal-content modal-product">
+    <div class="modal-header">
+      <div class="modal-title">Visualização do Produto</div>
+      <button class="close-btn" onclick="closeModal('productModal')">×</button>
+    </div>
+
+    <div class="modal-body product-view">
+      <div class="pv-left">
+        <div class="pv-thumbs" id="pvThumbs"></div>
+      </div>
+
+      <div class="pv-main">
+        <div class="pv-stage">
+          <img id="pvMainImg" alt="Produto"/>
+
+          <button class="pv-nav pv-prev" onclick="pvPrev()">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button class="pv-nav pv-next" onclick="pvNext()">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="pv-right">
+        <div class="pv-title" id="pvTitle">Produto</div>
+        <div class="pv-cat" id="pvCat">Categoria</div>
+        <div class="pv-price" id="pvPrice">R$ 0,00</div>
+
+        <button class="btn primary full" id="pvAddBtn">
+          Adicionar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <script type="module" src="./app.js"></script>
 </body>
 </html>

@@ -1,7 +1,3 @@
-// ===============================
-// ALMA BELA - Firebase + Cloudinary
-// ===============================
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import {
@@ -16,7 +12,9 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-// ---------- CONFIG ----------
+/* ==========================
+   CONFIG
+========================== */
 const CONFIG = {
   NOME_LOJA: "ALMA BELA",
   WHATSAPP: "5521979405145",
@@ -27,7 +25,6 @@ const CONFIG = {
   }
 };
 
-// ---------- FIREBASE CONFIG (SEU) ----------
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -38,55 +35,68 @@ const firebaseConfig = {
   measurementId: "G-2BZDHCSZSQ"
 };
 
-// ---------- INIT ----------
+/* ==========================
+   INIT
+========================== */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 const productsRef = collection(db, "products");
 
-// ---------- ESTADO ----------
+/* ==========================
+   STATE
+========================== */
 let produtos = [];
-let carrinho = JSON.parse(localStorage.getItem("almabela_cart_firestore")) || [];
+let produtosFiltrados = [];
+let carrinho = JSON.parse(localStorage.getItem("almabela_cart")) || [];
 let adminUser = null;
 
-// ---------- HELPERS ----------
+/* ==========================
+   HELPERS
+========================== */
 function escapeHtml(str) {
-  return String(str)
+  return String(str ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+function money(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+}
 
-// ---------- MENU MOBILE ----------
+/* ==========================
+   MENU / VIEW
+========================== */
 window.toggleMenu = function toggleMenu() {
   const nav = document.getElementById("navMenu");
   if (nav) nav.classList.toggle("open");
 };
 
-function fecharMenu() {
+function closeMenu() {
   const nav = document.getElementById("navMenu");
   if (nav) nav.classList.remove("open");
 }
 
-// ---------- VIEW ----------
-window.showView = function showView(nome, ev) {
+window.showView = function showView(name, ev) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  const sec = document.getElementById(nome);
-  if (sec) sec.classList.add("active");
+  const target = document.getElementById(name);
+  if (target) target.classList.add("active");
 
-  document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
-  if (ev && ev.target && ev.target.classList.contains("nav-link")) ev.target.classList.add("active");
+  document.querySelectorAll(".nav-link").forEach(b => b.classList.remove("active"));
+  if (ev?.target?.classList?.contains("nav-link")) ev.target.classList.add("active");
 
-  fecharMenu();
+  closeMenu();
 
-  if (nome === "colecao") renderizarProdutos();
-  if (nome === "admin") renderizarAdmin();
+  if (name === "colecao") renderProdutos();
+  if (name === "admin") renderAdmin();
 };
 
-// ---------- MODAIS ----------
+/* ==========================
+   MODAL
+========================== */
 window.openModal = function openModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
@@ -97,156 +107,202 @@ window.closeModal = function closeModal(id) {
   if (el) el.classList.remove("active");
 };
 
-document.addEventListener("click", e => {
+document.addEventListener("click", (e) => {
   if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
-// ---------- FIRESTORE REALTIME ----------
-function iniciarListenerProdutos() {
+/* ==========================
+   PRODUCTS (FIRESTORE)
+========================== */
+function listenProdutos() {
   const q = query(productsRef, orderBy("criadoEm", "desc"));
-
   onSnapshot(q, (snap) => {
     produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderizarProdutos();
-    renderizarAdmin();
+    produtosFiltrados = [...produtos];
+    preencherCategorias();
+    renderProdutos();
+    renderAdmin();
   });
 }
 
-// ---------- RENDER PRODUTOS ----------
-function renderizarProdutos() {
+function preencherCategorias() {
+  const select = document.getElementById("catSelect");
+  if (!select) return;
+
+  const atual = select.value || "";
+  const cats = Array.from(new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))).sort();
+
+  select.innerHTML = `
+    <option value="">Todas as categorias</option>
+    ${cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+  `;
+
+  select.value = cats.includes(atual) ? atual : "";
+}
+
+window.filtrarProdutos = function filtrarProdutos() {
+  const q = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+  const cat = (document.getElementById("catSelect")?.value || "").trim();
+
+  produtosFiltrados = produtos.filter(p => {
+    const nome = String(p.nome || "").toLowerCase();
+    const okNome = !q || nome.includes(q);
+    const okCat = !cat || (p.categoria || "").trim() === cat;
+    return okNome && okCat;
+  });
+
+  renderProdutos();
+};
+
+function renderProdutos() {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
-  if (!produtos.length) {
-    grid.innerHTML = `<p style="text-align:center;color:#777;">Nenhum produto disponível</p>`;
+  const list = produtosFiltrados;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="card"><p>Nenhum produto encontrado.</p></div>`;
     return;
   }
 
-  grid.innerHTML = produtos.map(p => `
-    <div class="product-card">
-      <img src="${p.imagemUrl}" alt="${escapeHtml(p.nome)}" class="product-image">
-      <div class="product-info">
-        <div class="product-tag">${escapeHtml(p.categoria || "Lingerie")}</div>
-        <div class="product-name">${escapeHtml(p.nome)}</div>
-        <div class="product-price">R$ ${Number(p.preco).toFixed(2)}</div>
-        <button class="btn-add" onclick="adicionarAoCarrinho('${p.id}')">+ Adicionar</button>
+  grid.innerHTML = list.map(p => `
+    <article class="product">
+      <img class="product-img" src="${p.imagemUrl}" alt="${escapeHtml(p.nome)}">
+      <div class="product-body">
+        <div class="product-meta">
+          <span class="tag">${escapeHtml(p.categoria || "Lingerie")}</span>
+          <span class="price">R$ ${money(p.preco)}</span>
+        </div>
+        <div class="title">${escapeHtml(p.nome)}</div>
+        <button class="btn primary full" onclick="addToCart('${p.id}')">
+          <i class="fa-solid fa-plus"></i>
+          Adicionar
+        </button>
       </div>
-    </div>
+    </article>
   `).join("");
 }
 
-// ---------- CARRINHO ----------
-function salvarCarrinho() {
-  localStorage.setItem("almabela_cart_firestore", JSON.stringify(carrinho));
-  atualizarBadge();
+/* ==========================
+   CART
+========================== */
+function saveCart() {
+  localStorage.setItem("almabela_cart", JSON.stringify(carrinho));
+  updateBadge();
 }
 
-function atualizarBadge() {
+function updateBadge() {
   const badge = document.getElementById("badge");
   if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
 }
 
-window.adicionarAoCarrinho = function adicionarAoCarrinho(id) {
+window.addToCart = function addToCart(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
   const item = carrinho.find(x => x.id === id);
-  if (item) item.qtd++;
+  if (item) item.qtd += 1;
   else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco), imagemUrl: p.imagemUrl, qtd: 1 });
 
-  salvarCarrinho();
-  openCart();
+  saveCart();
+  window.openCart();
 };
 
 window.openCart = function openCart() {
-  renderizarCarrinho();
+  renderCart();
   openModal("cartModal");
 };
 
-function renderizarCarrinho() {
-  const list = document.getElementById("cartList");
-  if (!list) return;
+function renderCart() {
+  const el = document.getElementById("cartList");
+  if (!el) return;
 
   if (!carrinho.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><p>Seu carrinho está vazio</p></div>`;
+    el.innerHTML = `<div class="cart-empty">Seu carrinho está vazio.</div>`;
     return;
   }
 
-  const total = carrinho.reduce((s, x) => s + x.preco * x.qtd, 0);
+  const total = carrinho.reduce((s, x) => s + (Number(x.preco) * x.qtd), 0);
 
-  list.innerHTML = `
-    <div class="cart-items">
+  el.innerHTML = `
+    <div class="cart-list">
       ${carrinho.map((x, i) => `
-        <div class="cart-item">
-          <img src="${x.imagemUrl}" class="cart-img" alt="">
-          <div class="cart-details">
+        <div class="cart-row">
+          <img src="${x.imagemUrl}" alt="">
+          <div class="cart-info">
             <div class="cart-name">${escapeHtml(x.nome)}</div>
-            <div class="cart-price">R$ ${x.preco.toFixed(2)}</div>
-            <div class="qty-control">
-              <button class="qty-btn" onclick="mudarQtd(${i}, -1)">−</button>
-              <span class="qty-val">${x.qtd}</span>
-              <button class="qty-btn" onclick="mudarQtd(${i}, 1)">+</button>
-              <button class="remove-btn" onclick="removerItem(${i})">Remover</button>
+            <div class="cart-sub">R$ ${money(x.preco)}</div>
+
+            <div class="cart-actions">
+              <div class="qty">
+                <button onclick="changeQty(${i}, -1)">-</button>
+                <span>${x.qtd}</span>
+                <button onclick="changeQty(${i}, 1)">+</button>
+              </div>
+              <button class="remove" onclick="removeItem(${i})">Remover</button>
             </div>
           </div>
         </div>
       `).join("")}
     </div>
 
-    <div class="cart-summary">
-      <div class="summary-line"><span>Subtotal:</span><span class="summary-val">R$ ${total.toFixed(2)}</span></div>
-      <div class="summary-line"><span>Frete:</span><span class="summary-val">A combinar</span></div>
-      <div class="summary-line total"><span>Total:</span><span class="summary-val">R$ ${total.toFixed(2)}</span></div>
+    <div class="summary">
+      <div class="sum-line"><span>Subtotal</span><span>R$ ${money(total)}</span></div>
+      <div class="sum-line"><span>Frete</span><span>A combinar</span></div>
+      <div class="sum-line total"><span>Total</span><span>R$ ${money(total)}</span></div>
     </div>
   `;
 }
 
-window.mudarQtd = function mudarQtd(idx, change) {
-  carrinho[idx].qtd += change;
-  if (carrinho[idx].qtd <= 0) carrinho.splice(idx, 1);
-  salvarCarrinho();
-  renderizarCarrinho();
+window.changeQty = function changeQty(index, delta) {
+  carrinho[index].qtd += delta;
+  if (carrinho[index].qtd <= 0) carrinho.splice(index, 1);
+  saveCart();
+  renderCart();
 };
 
-window.removerItem = function removerItem(idx) {
-  carrinho.splice(idx, 1);
-  salvarCarrinho();
-  renderizarCarrinho();
+window.removeItem = function removeItem(index) {
+  carrinho.splice(index, 1);
+  saveCart();
+  renderCart();
 };
 
 window.finalizarWhatsApp = function finalizarWhatsApp() {
   if (!carrinho.length) return;
 
-  let msg = `🛍️ Pedido - ${CONFIG.NOME_LOJA}\n\n`;
+  let msg = `Pedido - ${CONFIG.NOME_LOJA}\n\n`;
   carrinho.forEach((x, i) => {
-    msg += `${i + 1}. ${x.nome}\nR$ ${x.preco.toFixed(2)} x ${x.qtd} = R$ ${(x.preco * x.qtd).toFixed(2)}\n\n`;
+    const linha = `${i + 1}. ${x.nome}\nR$ ${money(x.preco)} x ${x.qtd} = R$ ${money(Number(x.preco) * x.qtd)}\n\n`;
+    msg += linha;
   });
 
-  const total = carrinho.reduce((s, x) => s + x.preco * x.qtd, 0);
-  msg += `💰 Total: R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
+  const total = carrinho.reduce((s, x) => s + (Number(x.preco) * x.qtd), 0);
+  msg += `Total: R$ ${money(total)}\n`;
 
   window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 };
 
-// ---------- ADMIN LOGIN ----------
+/* ==========================
+   ADMIN (AUTH)
+========================== */
 window.openLogin = function openLogin() {
+  const box = document.getElementById("loginMsg");
+  if (box) box.style.display = "none";
   openModal("loginModal");
 };
 
 window.adminLogin = async function adminLogin() {
-  const email = (document.getElementById("emailInput").value || "").trim();
-  const senha = (document.getElementById("passInput").value || "").trim();
+  const email = (document.getElementById("emailInput")?.value || "").trim();
+  const pass = (document.getElementById("passInput")?.value || "").trim();
   const msg = document.getElementById("loginMsg");
 
   try {
-    await signInWithEmailAndPassword(auth, email, senha);
+    await signInWithEmailAndPassword(auth, email, pass);
     closeModal("loginModal");
-    if (msg) msg.className = "msg";
   } catch (e) {
     if (msg) {
-      msg.className = "msg show error";
-      msg.textContent = "❌ Login inválido";
-      setTimeout(() => msg.classList.remove("show"), 2500);
+      msg.textContent = "Credenciais inválidas.";
+      msg.style.display = "block";
     }
   }
 };
@@ -255,11 +311,12 @@ window.adminSair = async function adminSair() {
   await signOut(auth);
 };
 
-// ---------- ADMIN UI ----------
-function renderizarAdmin() {
+function renderAdmin() {
   const locked = document.getElementById("adminLocked");
   const panel = document.getElementById("adminPanel");
   const list = document.getElementById("adminList");
+  const count = document.getElementById("adminCount");
+
   if (!locked || !panel || !list) return;
 
   if (!adminUser) {
@@ -271,30 +328,31 @@ function renderizarAdmin() {
   locked.style.display = "none";
   panel.style.display = "block";
 
+  if (count) count.textContent = `${produtos.length} itens`;
+
   list.innerHTML = produtos.map(p => `
     <div class="admin-item">
       <div>
-        <strong>${escapeHtml(p.nome)}</strong><br/>
-        <small>${escapeHtml(p.categoria || "Lingerie")} • R$ ${Number(p.preco).toFixed(2)}</small>
+        <strong>${escapeHtml(p.nome)}</strong><br>
+        <small>${escapeHtml(p.categoria || "Lingerie")} · R$ ${money(p.preco)}</small>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-secondary" onclick="adminExcluirProduto('${p.id}')">Excluir</button>
-      </div>
+      <button class="btn outline" onclick="adminExcluirProduto('${p.id}')">
+        <i class="fa-solid fa-trash"></i> Excluir
+      </button>
     </div>
   `).join("");
 }
 
-// ---------- CRUD FIRESTORE ----------
 window.adminAdicionarProduto = async function adminAdicionarProduto() {
   if (!adminUser) return;
 
-  const nome = (document.getElementById("pNome").value || "").trim();
-  const categoria = (document.getElementById("pCategoria").value || "").trim() || "Lingerie";
-  const preco = Number(document.getElementById("pPreco").value);
-  const imagemUrl = (document.getElementById("pImagem").value || "").trim();
+  const nome = (document.getElementById("pNome")?.value || "").trim();
+  const categoria = (document.getElementById("pCategoria")?.value || "").trim() || "Lingerie";
+  const preco = Number(document.getElementById("pPreco")?.value);
+  const imagemUrl = (document.getElementById("pImagem")?.value || "").trim();
 
   if (!nome || !imagemUrl || !Number.isFinite(preco) || preco <= 0) {
-    alert("Preencha Nome, Preço e a imagem.");
+    alert("Preencha nome, categoria, preço e imagem.");
     return;
   }
 
@@ -317,10 +375,12 @@ window.adminExcluirProduto = async function adminExcluirProduto(id) {
   await deleteDoc(doc(db, "products", id));
 };
 
-// ---------- CLOUDINARY UPLOAD (GALERIA) ----------
+/* ==========================
+   CLOUDINARY (UPLOAD GALERIA)
+========================== */
 window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   if (!CONFIG.CLOUDINARY.cloudName || !CONFIG.CLOUDINARY.uploadPreset) {
-    alert("Preencha CLOUD_NAME e UPLOAD_PRESET no app.js");
+    alert("Configure cloudName e uploadPreset no app.js");
     return;
   }
 
@@ -332,11 +392,10 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
       multiple: false
     },
     (error, result) => {
-      if (!error && result && result.event === "success") {
+      if (!error && result?.event === "success") {
         const url = result.info.secure_url;
-        const inp = document.getElementById("pImagem");
-        if (inp) inp.value = url;
-        alert("✅ Imagem enviada para o Cloudinary!");
+        const input = document.getElementById("pImagem");
+        if (input) input.value = url;
       }
     }
   );
@@ -344,30 +403,38 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   widget.open();
 };
 
-// ---------- ADMIN ESCONDIDO ----------
-function checarHashAdmin() {
+/* ==========================
+   ADMIN ESCONDIDO
+========================== */
+function checkAdminHash() {
   const hash = (location.hash || "").replace("#", "");
-  if (hash === "admin") showView("admin");
+  if (hash === "admin") window.showView("admin");
 }
-window.addEventListener("hashchange", checarHashAdmin);
+window.addEventListener("hashchange", checkAdminHash);
 
-// ---------- CONTATO ----------
+/* ==========================
+   CONTACT + INIT
+========================== */
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
   if (!el) return;
   el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
-  el.textContent = `+${CONFIG.WHATSAPP}`;
 }
 
-// ---------- INIT ----------
+function setYear() {
+  const y = document.getElementById("year");
+  if (y) y.textContent = new Date().getFullYear();
+}
+
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
-  renderizarAdmin();
+  renderAdmin();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  setYear();
   updateWhatsLink();
-  atualizarBadge();
-  checarHashAdmin();
-  iniciarListenerProdutos();
+  updateBadge();
+  checkAdminHash();
+  listenProdutos();
 });

@@ -1,39 +1,55 @@
 <!DOCTYPE html>
-<html lang="pt-BR" style="height: 100%; width: 100%;">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alma Bela - Boutique</title>
+  <title>Alma Bela - Catálogo</title>
+
   <link rel="stylesheet" href="./styles.css" />
+
+  <!-- Fonts (elegante) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons (profissional) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
 <body>
-  <div class="app-wrapper">
+  <div class="app">
     <!-- HEADER -->
-    <header>
-      <div class="header-content">
-        <button class="logo-btn" onclick="showView('colecao', event)">
-          <div class="brand">
-            <img class="brand-logo" src="./logo.png" alt="Alma Bela" />
-            <div class="brand-text">
-              <div class="brand-title">ALMA BELA</div>
-              <div class="brand-sub">LINGERIE</div>
-            </div>
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="./" onclick="showView('colecao', event)">
+          <!-- Troque logo.png pelo arquivo da sua logo -->
+          <img class="brand-logo" src="./logo.png" alt="Alma Bela" />
+          <div class="brand-text">
+            <div class="brand-name">ALMA BELA</div>
+            <div class="brand-sub">LINGERIE</div>
           </div>
+        </a>
+
+        <button class="icon-btn menu-btn" onclick="toggleMenu()" aria-label="Abrir menu">
+          <i class="fa-solid fa-bars"></i>
         </button>
 
-        <!-- Botão menu mobile -->
-        <button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menu">☰</button>
-
         <nav class="nav" id="navMenu">
-          <button class="nav-link active" onclick="showView('colecao', event)">COLEÇÃO</button>
-          <button class="nav-link" onclick="showView('sobre', event)">SOBRE</button>
-          <button class="nav-link" onclick="showView('contato', event)">CONTATO</button>
+          <button class="nav-link active" onclick="showView('colecao', event)">
+            Coleção
+          </button>
+          <button class="nav-link" onclick="showView('sobre', event)">
+            Sobre
+          </button>
+          <button class="nav-link" onclick="showView('contato', event)">
+            Contato
+          </button>
         </nav>
 
         <div class="header-actions">
           <button class="btn-cart" onclick="openCart()">
-            CARRINHO
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span class="btn-cart-text">Carrinho</span>
             <span class="cart-badge" id="badge">0</span>
           </button>
         </div>
@@ -41,138 +57,188 @@
     </header>
 
     <!-- MAIN -->
-    <main>
+    <main class="main">
       <!-- COLEÇÃO -->
-      <div id="colecao" class="section active">
+      <section id="colecao" class="section active">
         <div class="container">
           <div class="hero">
             <h1>Coleção Premium</h1>
             <p>Elegância e conforto em cada peça</p>
           </div>
-          <div class="products-grid" id="grid"></div>
+
+          <div class="toolbar">
+            <div class="search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input id="searchInput" type="text" placeholder="Buscar produto..." oninput="filtrarProdutos()" />
+            </div>
+
+            <div class="select">
+              <i class="fa-solid fa-filter"></i>
+              <select id="catSelect" onchange="filtrarProdutos()">
+                <option value="">Todas as categorias</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="grid" class="grid"></div>
         </div>
-      </div>
+      </section>
 
       <!-- SOBRE -->
-      <div id="sobre" class="section">
+      <section id="sobre" class="section">
         <div class="container">
-          <div class="page-box">
+          <div class="card">
             <h2>Sobre a Alma Bela</h2>
-            <p>Catálogo online para facilitar seus pedidos com discrição e praticidade.</p>
-            <p>Escolha seus itens, adicione ao carrinho e finalize pelo WhatsApp.</p>
+            <p>Um catálogo online para você escolher, montar seu pedido e finalizar diretamente no WhatsApp com praticidade e discrição.</p>
+            <p>Todos os produtos são gerenciados no painel administrativo e aparecem para todos os usuários.</p>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- CONTATO -->
-      <div id="contato" class="section">
+      <section id="contato" class="section">
         <div class="container">
-          <div class="page-box">
+          <div class="card">
             <h2>Contato</h2>
-            <p><strong>WhatsApp:</strong> <a id="whatsLink" href="#" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a></p>
+            <p class="contact-line">
+              <span class="contact-icon"><i class="fa-brands fa-whatsapp"></i></span>
+              <a id="whatsLink" href="#" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
+            </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- ADMIN (ESCONDIDO) -->
-      <div id="admin" class="section">
+      <!-- ADMIN (ESCONDIDO - acessa por /#admin) -->
+      <section id="admin" class="section">
         <div class="container">
-          <div class="page-box">
-            <h2>Painel Admin</h2>
-            <p>Gerencie seus produtos (Firebase) e envie imagens direto da galeria (Cloudinary).</p>
-
-            <div id="adminLocked">
-              <button class="btn btn-primary" onclick="openLogin()">🔐 Entrar</button>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Painel Administrativo</h2>
+                <p>Cadastre e exclua produtos no Firebase e envie imagens direto da galeria para o Cloudinary.</p>
+              </div>
+              <span class="pill"><i class="fa-solid fa-shield-halved"></i> Acesso restrito</span>
             </div>
 
-            <div id="adminPanel" style="display:none; margin-top:18px;">
-              <h3 style="margin-bottom:12px;">Adicionar produto</h3>
+            <!-- BLOQUEADO -->
+            <div id="adminLocked">
+              <button class="btn primary" onclick="openLogin()">
+                <i class="fa-solid fa-lock"></i> Entrar
+              </button>
+            </div>
 
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Nome</label>
-                  <input id="pNome" placeholder="Ex: Conjunto Rosé" />
+            <!-- LOGADO -->
+            <div id="adminPanel" style="display:none;">
+              <div class="admin-grid">
+                <div class="admin-form">
+                  <h3>Novo produto</h3>
+
+                  <div class="form-row">
+                    <label>Nome</label>
+                    <input id="pNome" placeholder="Ex: Conjunto Renda Rosé" />
+                  </div>
+
+                  <div class="form-row">
+                    <label>Categoria</label>
+                    <input id="pCategoria" placeholder="Ex: Lingerie" />
+                  </div>
+
+                  <div class="form-row">
+                    <label>Preço</label>
+                    <input id="pPreco" type="number" step="0.01" placeholder="Ex: 89.90" />
+                  </div>
+
+                  <div class="form-row">
+                    <label>Imagem (Cloudinary)</label>
+                    <input id="pImagem" placeholder="Clique em Importar para preencher automaticamente" />
+                  </div>
+
+                  <div class="admin-actions">
+                    <button class="btn ghost" type="button" onclick="abrirUploadCloudinary()">
+                      <i class="fa-regular fa-image"></i> Importar da galeria
+                    </button>
+
+                    <button class="btn primary" onclick="adminAdicionarProduto()">
+                      <i class="fa-solid fa-plus"></i> Salvar produto
+                    </button>
+
+                    <button class="btn outline" onclick="adminSair()">
+                      <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+                    </button>
+                  </div>
+
+                  <p class="hint">
+                    Dica: as imagens ficam no Cloudinary, e o link fica salvo no Firebase junto com o produto.
+                  </p>
                 </div>
 
-                <div class="form-group">
-                  <label>Categoria</label>
-                  <input id="pCategoria" placeholder="Ex: Lingerie" />
+                <div class="admin-list">
+                  <div class="admin-list-head">
+                    <h3>Produtos cadastrados</h3>
+                    <span class="muted" id="adminCount">0 itens</span>
+                  </div>
+                  <div id="adminList"></div>
                 </div>
-
-                <div class="form-group">
-                  <label>Preço</label>
-                  <input id="pPreco" type="number" step="0.01" placeholder="Ex: 89.90" />
-                </div>
-
-                <div class="form-group">
-                  <label>Imagem (Cloudinary)</label>
-                  <input id="pImagem" placeholder="A URL vai aparecer aqui automaticamente" />
-                </div>
-              </div>
-
-              <div class="admin-actions">
-                <button class="btn btn-secondary" type="button" onclick="abrirUploadCloudinary()">
-                  📷 Importar da galeria
-                </button>
-
-                <button class="btn btn-primary" onclick="adminAdicionarProduto()">
-                  Salvar produto
-                </button>
-
-                <button class="btn btn-secondary" onclick="adminSair()">
-                  Sair
-                </button>
-              </div>
-
-              <div style="margin-top:22px;">
-                <h3 style="margin-bottom:12px;">Produtos cadastrados</h3>
-                <div id="adminList"></div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <span class="muted">© <span id="year"></span> Alma Bela</span>
+        <a class="muted" href="#admin" onclick="location.hash='admin'">Acesso administrativo</a>
+      </div>
+    </footer>
   </div>
 
-  <!-- MODAL CARRINHO -->
+  <!-- MODAL: Carrinho -->
   <div class="modal" id="cartModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">🛍️ Seu Carrinho</h2>
-        <button class="close-btn" onclick="closeModal('cartModal')">×</button>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-bag-shopping"></i> Seu carrinho</h3>
+        <button class="icon-btn" onclick="closeModal('cartModal')" aria-label="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
       <div class="modal-body">
         <div id="cartList"></div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('cartModal')">Continuar</button>
-        <button class="btn btn-primary" onclick="finalizarWhatsApp()">WhatsApp 💬</button>
+      <div class="modal-foot">
+        <button class="btn outline" onclick="closeModal('cartModal')">Continuar</button>
+        <button class="btn primary" onclick="finalizarWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i> Finalizar no WhatsApp
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL LOGIN -->
+  <!-- MODAL: Login -->
   <div class="modal" id="loginModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">🔐 Login Admin</h2>
-        <button class="close-btn" onclick="closeModal('loginModal')">×</button>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-lock"></i> Login</h3>
+        <button class="icon-btn" onclick="closeModal('loginModal')" aria-label="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
       <div class="modal-body">
-        <div class="msg" id="loginMsg"></div>
+        <div class="alert" id="loginMsg" style="display:none;"></div>
 
-        <div class="form-group">
+        <div class="form-row">
           <label>Email</label>
           <input type="email" id="emailInput" placeholder="Digite seu email" />
         </div>
 
-        <div class="form-group">
+        <div class="form-row">
           <label>Senha</label>
           <input type="password" id="passInput" placeholder="Digite sua senha" />
         </div>
 
-        <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">
+        <button class="btn primary full" onclick="adminLogin()">
           Entrar
         </button>
       </div>
@@ -182,7 +248,7 @@
   <!-- Cloudinary Upload Widget -->
   <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
 
-  <!-- Seu app com Firebase (module) -->
+  <!-- App (Firebase Module) -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

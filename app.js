@@ -25,7 +25,7 @@ const CONFIG = {
   }
 };
 
-/* Firebase config (seu) */
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -48,7 +48,7 @@ let produtosFiltrados = [];
 let carrinho = JSON.parse(localStorage.getItem("almabela_cart")) || [];
 let adminUser = null;
 
-// Modal Produto state
+// Modal Produto
 let pvImages = [];
 let pvIndex = 0;
 let pvProductId = null;
@@ -136,7 +136,6 @@ document.addEventListener("click", (e) => {
 ========================== */
 function listenProdutos() {
   const q = query(collection(db, "products"), orderBy("criadoEm", "desc"));
-
   onSnapshot(q, (snap) => {
     produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     produtosFiltrados = [...produtos];
@@ -151,9 +150,7 @@ function preencherCategorias() {
   if (!select) return;
 
   const atual = select.value || "";
-  const cats = Array.from(
-    new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))
-  ).sort();
+  const cats = Array.from(new Set(produtos.map(p => (p.categoria || "").trim()).filter(Boolean))).sort();
 
   select.innerHTML = `
     <option value="">Todas as categorias</option>
@@ -189,7 +186,7 @@ function renderCarousel(p) {
   if (!imgs.length) {
     return `
       <div class="carousel">
-        <div style="padding:16px;color:#777;font-weight:700;">Sem imagem</div>
+        <div style="padding:16px;color:#777;font-weight:800;">Sem imagem</div>
       </div>
     `;
   }
@@ -221,11 +218,9 @@ function renderCarousel(p) {
 function getCarouselState(id) {
   const el = document.getElementById(id);
   if (!el) return null;
-
   const track = el.querySelector(".carousel-track");
   const imgs = el.querySelectorAll(".carousel-img");
   const dots = el.querySelectorAll(".dot");
-
   return { el, track, imgs, dots };
 }
 
@@ -241,7 +236,6 @@ function setCarouselIndex(id, index) {
   if (i >= total) i = 0;
 
   st.track.style.transform = `translateX(-${i * 100}%)`;
-
   st.dots.forEach((d, idx) => d.classList.toggle("active", idx === i));
   st.el.dataset.index = String(i);
 }
@@ -264,7 +258,6 @@ window.carouselGo = function carouselGo(id, index) {
 
 /* ==========================
    RENDER PRODUTOS
-   - Modal só abre ao clicar no card
 ========================== */
 function renderProdutos() {
   const grid = document.getElementById("grid");
@@ -293,7 +286,7 @@ function renderProdutos() {
 }
 
 /* ==========================
-   MODAL PRODUTO (Nike style)
+   MODAL PRODUTO
 ========================== */
 window.openProduct = function openProduct(id) {
   const p = produtos.find(x => x.id === id);
@@ -357,7 +350,7 @@ window.pvPrev = function pvPrev() {
   renderProductModal();
 };
 
-// Swipe no modal (celular)
+/* Swipe modal */
 document.addEventListener("touchstart", (e) => {
   const stage = e.target.closest?.(".pv-stage");
   if (!stage) return;
@@ -493,7 +486,7 @@ window.adminLogin = async function adminLogin() {
     closeModal("loginModal");
     toast("Login realizado com sucesso.");
     showView("admin");
-  } catch (e) {
+  } catch {
     alert("Credenciais inválidas.");
   }
 };
@@ -545,9 +538,26 @@ function renderAdmin() {
   }).join("");
 }
 
+function renderPhotoGrid(urls) {
+  const grid = document.getElementById("photoGrid");
+  if (!grid) return;
+
+  if (!urls.length) {
+    grid.innerHTML = `<div class="photo-empty">Nenhuma foto importada</div>`;
+    return;
+  }
+
+  grid.innerHTML = urls.map(u => `
+    <div class="photo-thumb">
+      <img src="${u}" alt="">
+    </div>
+  `).join("");
+}
+
 window.limparFotos = function limparFotos() {
   const t = document.getElementById("pImagens");
   if (t) t.value = "";
+  renderPhotoGrid([]);
   toast("Fotos limpas.");
 };
 
@@ -563,7 +573,7 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   const preco = Number(document.getElementById("pPreco")?.value);
 
   const imagensRaw = (document.getElementById("pImagens")?.value || "").trim();
-  const imagens = imagensRaw.split("\n").map(x => x.trim()).filter(Boolean);
+  const imagens = imagensRaw ? imagensRaw.split("\n").map(x => x.trim()).filter(Boolean) : [];
 
   if (!nome || !imagens.length || !Number.isFinite(preco) || preco <= 0) {
     toast("Preencha nome, preço e importe pelo menos 1 foto.", true);
@@ -571,22 +581,17 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   }
 
   try {
-    await addDoc(collection(db, "products"), {
-      nome,
-      categoria,
-      preco,
-      imagens,
-      criadoEm: serverTimestamp()
-    });
+    await addDoc(collection(db, "products"), { nome, categoria, preco, imagens, criadoEm: serverTimestamp() });
 
     document.getElementById("pNome").value = "";
     document.getElementById("pCategoria").value = "";
     document.getElementById("pPreco").value = "";
     document.getElementById("pImagens").value = "";
+    renderPhotoGrid([]);
 
     toast("Produto cadastrado com sucesso.");
     showView("admin");
-  } catch (e) {
+  } catch {
     toast("Permissão insuficiente no Firestore (Rules).", true);
   }
 };
@@ -604,7 +609,7 @@ window.adminExcluirProduto = async function adminExcluirProduto(id) {
   try {
     await deleteDoc(doc(db, "products", id));
     toast("Produto excluído com sucesso.");
-  } catch (e) {
+  } catch {
     toast("Permissão insuficiente no Firestore (Rules).", true);
   }
 };
@@ -629,18 +634,24 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
     {
       cloudName: CONFIG.CLOUDINARY.cloudName,
       uploadPreset: CONFIG.CLOUDINARY.uploadPreset,
-      sources: ["local", "camera", "url"],
+      sources: ["local","camera","url"],
       multiple: true,
       maxFiles: 12
     },
     (error, result) => {
-      if (!error && result?.event === "success") {
+      if (error) return;
+
+      if (result?.event === "success") {
         const url = result.info.secure_url;
         const t = document.getElementById("pImagens");
-        if (t) {
-          const atual = (t.value || "").trim();
-          t.value = atual ? `${atual}\n${url}` : url;
-        }
+        if (!t) return;
+
+        const atual = (t.value || "").trim();
+        const novo = atual ? `${atual}\n${url}` : url;
+        t.value = novo;
+
+        const urls = novo.split("\n").map(x => x.trim()).filter(Boolean);
+        renderPhotoGrid(urls);
       }
     }
   );
@@ -653,8 +664,7 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
 ========================== */
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
-  if (!el) return;
-  el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
+  if (el) el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
 }
 
 function setYear() {
@@ -665,7 +675,6 @@ function setYear() {
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
 
-  // botão Admin aparece automaticamente quando já estiver logado
   const adminBtn = document.getElementById("adminBtn");
   if (adminBtn) adminBtn.style.display = adminUser ? "flex" : "none";
 

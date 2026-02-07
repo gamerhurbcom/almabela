@@ -24,8 +24,8 @@ const CONFIG = {
 
   // Cloudinary (preencha com os seus dados)
   CLOUDINARY: {
-    cloudName: "SEU_CLOUD_NAME",
-    uploadPreset: "SEU_UPLOAD_PRESET_UNSIGNED"
+    cloudName: "doi067uao",
+    uploadPreset: "Unsigned"
   }
 };
 

@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="pt-BR" style="height: 100%; width: 100%;">
+<html lang="en" style="height: 100%; width: 100%;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alma Bela - Boutique de Lingerie</title>
-
-  <link rel="stylesheet" href="styles.css" />
+  <title>Alma Bela - Premium Boutique</title>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
@@ -14,24 +13,25 @@
     <header>
       <div class="header-content">
         <button class="logo-btn" onclick="showView('collection', event)">
-          <div class="logo-icon">
-            <img src="./logo.png" alt="Logo" />
-          </div>
-
-          <div class="logo-text">
-            <h1>ALMA BELA</h1>
-            <p>BOUTIQUE DE LINGERIE</p>
+          <div class="brand">
+            <img class="brand-logo" src="./logo.png" alt="Alma Bela Logo" />
+            <div class="brand-text">
+              <div class="brand-title">ALMA BELA</div>
+              <div class="brand-sub">LINGERIE</div>
+            </div>
           </div>
         </button>
 
         <nav class="nav">
-          <button class="nav-link active" onclick="showView('collection', event)">Coleção</button>
-          <button class="nav-link" onclick="showView('about', event)">Sobre</button>
+          <button class="nav-link active" onclick="showView('collection', event)">COLLECTION</button>
+          <button class="nav-link" onclick="showView('about', event)">ABOUT</button>
+          <button class="nav-link" onclick="showView('contact', event)">CONTACT</button>
+          <button class="nav-link" onclick="showView('admin', event)">ADMIN</button>
         </nav>
 
         <div class="header-actions">
           <button class="btn-cart" onclick="openCart()">
-            🛍️
+            CART
             <span class="cart-badge" id="badge">0</span>
           </button>
         </div>
@@ -44,10 +44,9 @@
       <div id="collection" class="section active">
         <div class="container">
           <div class="hero">
-            <h1>Coleção de Lingerie</h1>
-            <p>Escolha suas peças e finalize seu pedido pelo WhatsApp</p>
+            <h1>Premium Collection</h1>
+            <p>Elegance and comfort in every piece</p>
           </div>
-
           <div class="products-grid" id="grid"></div>
         </div>
       </div>
@@ -56,14 +55,69 @@
       <div id="about" class="section">
         <div class="container">
           <div class="page-box">
-            <h2>Sobre a Alma Bela</h2>
-            <p>Catálogo online para facilitar seus pedidos com discrição e praticidade.</p>
-            <p>Escolha os itens, selecione o tamanho e finalize pelo WhatsApp.</p>
+            <h2>About Alma Bela</h2>
+            <p>Premium lingerie boutique with elegance, comfort, and discretion.</p>
+            <p>Select your items, add to cart and checkout via WhatsApp.</p>
+          </div>
+        </div>
+      </div>
 
-            <p style="margin-top: 30px;">
-              <strong>📱 WhatsApp:</strong>
-              <a id="whatsLink" href="#" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
-            </p>
+      <!-- CONTACT -->
+      <div id="contact" class="section">
+        <div class="container">
+          <div class="page-box">
+            <h2>Contact</h2>
+            <p><strong>WhatsApp:</strong> <a id="whatsLink" href="#" target="_blank" rel="noopener noreferrer">Open WhatsApp</a></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div id="admin" class="section">
+        <div class="container">
+          <div class="page-box">
+            <h2>Admin Panel</h2>
+            <p>Manage products (Cloudinary image URL).</p>
+
+            <div id="adminLocked">
+              <button class="btn btn-primary" onclick="openLogin()">🔐 Login</button>
+            </div>
+
+            <div id="adminPanel" style="display:none; margin-top:18px;">
+              <h3 style="margin-bottom:12px;">Add product</h3>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Name</label>
+                  <input id="pName" placeholder="Ex: Lace Set" />
+                </div>
+
+                <div class="form-group">
+                  <label>Category</label>
+                  <input id="pCat" placeholder="Ex: Lingerie" />
+                </div>
+
+                <div class="form-group">
+                  <label>Price</label>
+                  <input id="pPrice" type="number" step="0.01" placeholder="Ex: 89.90" />
+                </div>
+
+                <div class="form-group">
+                  <label>Image URL (Cloudinary)</label>
+                  <input id="pImg" placeholder="https://res.cloudinary.com/...jpg" />
+                </div>
+              </div>
+
+              <div style="display:flex; gap:12px; margin-top:12px;">
+                <button class="btn btn-primary" onclick="adminAddProduct()">Save product</button>
+                <button class="btn btn-secondary" onclick="adminLogout()">Logout</button>
+              </div>
+
+              <div style="margin-top:22px;">
+                <h3 style="margin-bottom:12px;">Products</h3>
+                <div id="adminList"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -74,23 +128,22 @@
   <div class="modal" id="cartModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title">🛍️ Seu Carrinho</h2>
+        <h2 class="modal-title">🛍️ Your Cart</h2>
         <button class="close-btn" onclick="closeModal('cartModal')">×</button>
       </div>
-
       <div class="modal-body">
         <div id="cartList"></div>
       </div>
-
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('cartModal')">Continuar</button>
+        <button class="btn btn-secondary" onclick="closeModal('cartModal')">Continue</button>
         <button class="btn btn-primary" onclick="doCheckout()">WhatsApp 💬</button>
       </div>
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="produtos.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">🔐 Admin Login</h2>
+        <button class="close

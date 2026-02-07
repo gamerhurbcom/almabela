@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alma Bela - Catálogo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alma Bela</title>
 
   <link rel="stylesheet" href="./styles.css" />
 
@@ -12,35 +12,37 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Ícones (profissional) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Ícones profissionais -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <!-- Cloudinary Upload Widget -->
+  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
 </head>
 
 <body>
   <div class="app">
     <!-- HEADER -->
     <header class="header">
-      <div class="header-inner">
-        <a class="brand" href="./" onclick="showView('colecao', event)">
-          <!-- Troque logo.png pelo seu arquivo -->
-          <img class="brand-logo" src="./logo.png" alt="Alma Bela" />
+      <div class="wrap header-inner">
+
+        <a class="brand" href="#" onclick="showView('colecao', event)">
+          <div class="brand-logo">AB</div>
           <div class="brand-text">
-            <div class="brand-name">ALMA BELA</div>
-            <div class="brand-sub">LINGERIE</div>
+            <div class="brand-title">ALMA BELA</div>
+            <div class="brand-sub">CATÁLOGO PREMIUM</div>
           </div>
         </a>
 
-        <button class="icon-btn menu-btn" onclick="toggleMenu()" aria-label="Abrir menu">
+        <button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menu">
           <i class="fa-solid fa-bars"></i>
         </button>
 
         <nav class="nav" id="navMenu">
           <button class="nav-link active" onclick="showView('colecao', event)">Coleção</button>
           <button class="nav-link" onclick="showView('sobre', event)">Sobre</button>
-          <button class="nav-link" onclick="showView('contato', event)">Contato</button>
         </nav>
 
-        <div class="header-actions">
+        <div class="actions">
           <button class="btn-cart" onclick="openCart()">
             <i class="fa-solid fa-bag-shopping"></i>
             <span class="btn-cart-text">Carrinho</span>
@@ -54,19 +56,19 @@
     <main class="main">
       <!-- COLEÇÃO -->
       <section id="colecao" class="section active">
-        <div class="container">
+        <div class="wrap">
           <div class="hero">
-            <h1>Coleção Premium</h1>
-            <p>Elegância e conforto em cada peça</p>
+            <h1>Catálogo Premium</h1>
+            <p>Elegância, conforto e discrição em cada peça.</p>
           </div>
 
-          <div class="toolbar">
-            <div class="search">
+          <div class="filters">
+            <div class="field">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input id="searchInput" type="text" placeholder="Buscar produto..." oninput="filtrarProdutos()" />
+              <input id="searchInput" type="text" placeholder="Buscar produto..." oninput="filtrarProdutos()"/>
             </div>
 
-            <div class="select">
+            <div class="field">
               <i class="fa-solid fa-filter"></i>
               <select id="catSelect" onchange="filtrarProdutos()">
                 <option value="">Todas as categorias</option>
@@ -74,175 +76,153 @@
             </div>
           </div>
 
-          <div id="grid" class="grid"></div>
+          <div class="grid" id="grid"></div>
         </div>
       </section>
 
       <!-- SOBRE -->
       <section id="sobre" class="section">
-        <div class="container">
-          <div class="card">
-            <h2>Sobre a Alma Bela</h2>
-            <p>Catálogo online para escolher seus produtos e finalizar o pedido no WhatsApp com praticidade e discrição.</p>
-            <p>Os produtos são gerenciados no painel administrativo (acesso restrito).</p>
-          </div>
-        </div>
-      </section>
+        <div class="wrap">
+          <div class="box">
+            <h2>Sobre</h2>
+            <p>Bem-vindo à Alma Bela. Trabalhamos com produtos selecionados, com foco em elegância, conforto e qualidade.</p>
+            <p>Nosso atendimento é feito diretamente pelo WhatsApp.</p>
 
-      <!-- CONTATO -->
-      <section id="contato" class="section">
-        <div class="container">
-          <div class="card">
-            <h2>Contato</h2>
-            <p class="contact-line">
-              <span class="contact-icon"><i class="fa-brands fa-whatsapp"></i></span>
-              <a id="whatsLink" href="#" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ADMIN (ESCONDIDO: só abre com /#admin e login) -->
-      <section id="admin" class="section">
-        <div class="container">
-          <div class="card">
-            <div class="card-head">
-              <div>
-                <h2>Painel Administrativo</h2>
-                <p>Cadastre e exclua produtos no Firebase e envie imagens direto da galeria para o Cloudinary.</p>
-              </div>
-              <span class="pill"><i class="fa-solid fa-shield-halved"></i> Acesso restrito</span>
+            <div class="contact">
+              <a id="whatsLink" class="btn primary" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-whatsapp"></i> Atendimento WhatsApp
+              </a>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <!-- BLOQUEADO -->
-            <div id="adminLocked">
+      <!-- ADMIN (escondido, só acessa com #admin) -->
+      <section id="admin" class="section">
+        <div class="wrap">
+          <div class="box">
+            <h2>Painel Administrativo</h2>
+
+            <div id="adminLocked" style="display:block;">
+              <p>Para acessar o painel, faça login.</p>
               <button class="btn primary" onclick="openLogin()">
                 <i class="fa-solid fa-lock"></i> Entrar
               </button>
             </div>
 
-            <!-- LOGADO -->
             <div id="adminPanel" style="display:none;">
-              <div class="admin-grid">
-                <div class="admin-form">
-                  <h3>Novo produto</h3>
-
-                  <div class="form-row">
-                    <label>Nome</label>
-                    <input id="pNome" placeholder="Ex: Conjunto Renda Rosé" />
-                  </div>
-
-                  <div class="form-row">
-                    <label>Categoria</label>
-                    <input id="pCategoria" placeholder="Ex: Lingerie" />
-                  </div>
-
-                  <div class="form-row">
-                    <label>Preço</label>
-                    <input id="pPreco" type="number" step="0.01" placeholder="Ex: 89.90" />
-                  </div>
-
-                  <div class="form-row">
-                    <label>Imagem (Cloudinary)</label>
-                    <input id="pImagem" placeholder="Clique em Importar para preencher automaticamente" />
-                  </div>
-
-                  <div class="admin-actions">
-                    <button class="btn ghost" type="button" onclick="abrirUploadCloudinary()">
-                      <i class="fa-regular fa-image"></i> Importar da galeria
-                    </button>
-
-                    <button class="btn primary" onclick="adminAdicionarProduto()">
-                      <i class="fa-solid fa-plus"></i> Salvar produto
-                    </button>
-
-                    <button class="btn outline" onclick="adminSair()">
-                      <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
-                    </button>
-                  </div>
-
-                  <p class="hint">
-                    As imagens ficam no Cloudinary. O link da imagem é salvo no Firebase junto com o produto.
-                  </p>
-                </div>
-
-                <div class="admin-list">
-                  <div class="admin-list-head">
-                    <h3>Produtos cadastrados</h3>
-                    <span class="muted" id="adminCount">0 itens</span>
-                  </div>
-
-                  <div id="adminList"></div>
-                </div>
+              <div class="admin-top">
+                <div class="admin-count" id="adminCount">0 itens</div>
+                <button class="btn outline" onclick="adminSair()">
+                  <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </button>
               </div>
-            </div>
 
+              <div class="admin-form">
+                <div class="row">
+                  <div class="col">
+                    <label>Nome do produto</label>
+                    <input id="pNome" placeholder="Ex: Conjunto renda premium"/>
+                  </div>
+                  <div class="col">
+                    <label>Categoria</label>
+                    <input id="pCategoria" placeholder="Ex: Lingerie"/>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <label>Preço (R$)</label>
+                    <input id="pPreco" type="number" step="0.01" placeholder="Ex: 89.90"/>
+                  </div>
+                </div>
+
+                <label>Imagens (várias)</label>
+                <textarea id="pImagens" rows="4" placeholder="As URLs serão preenchidas automaticamente."></textarea>
+
+                <div class="admin-actions">
+                  <button class="btn ghost" type="button" onclick="abrirUploadCloudinary()">
+                    <i class="fa-regular fa-image"></i> Importar fotos
+                  </button>
+
+                  <button class="btn outline" type="button" onclick="limparFotos()">
+                    <i class="fa-solid fa-eraser"></i> Limpar fotos
+                  </button>
+
+                  <button class="btn primary" onclick="adminAdicionarProduto()">
+                    <i class="fa-solid fa-plus"></i> Salvar produto
+                  </button>
+                </div>
+
+                <div class="msg" id="loginMsg" style="display:none;"></div>
+              </div>
+
+              <h3 style="margin-top:26px;">Produtos cadastrados</h3>
+              <div id="adminList" class="admin-list"></div>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- FOOTER (SEM LINK ADMIN) -->
+    <!-- FOOTER -->
     <footer class="footer">
-      <div class="footer-inner">
-        <span class="muted">© <span id="year"></span> Alma Bela</span>
+      <div class="wrap footer-inner">
+        <div>© <span id="year"></span> Alma Bela</div>
       </div>
     </footer>
   </div>
 
-  <!-- MODAL: Carrinho -->
-  <div class="modal" id="cartModal">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3><i class="fa-solid fa-bag-shopping"></i> Seu carrinho</h3>
-        <button class="icon-btn" onclick="closeModal('cartModal')" aria-label="Fechar">
-          <i class="fa-solid fa-xmark"></i>
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-lock"></i> Login Admin
+        </div>
+        <button class="close-btn" onclick="closeModal('loginModal')">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="msg" id="loginMsgModal" style="display:none;"></div>
+
+        <label>Email</label>
+        <input id="emailInput" type="email" placeholder="Seu email admin"/>
+
+        <label>Senha</label>
+        <input id="passInput" type="password" placeholder="Sua senha"/>
+
+        <button class="btn primary full" style="margin-top:14px;" onclick="adminLogin()">
+          <i class="fa-solid fa-right-to-bracket"></i> Entrar
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- CART MODAL -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-bag-shopping"></i> Seu Carrinho
+        </div>
+        <button class="close-btn" onclick="closeModal('cartModal')">×</button>
+      </div>
+
       <div class="modal-body">
         <div id="cartList"></div>
       </div>
-      <div class="modal-foot">
+
+      <div class="modal-footer">
         <button class="btn outline" onclick="closeModal('cartModal')">Continuar</button>
         <button class="btn primary" onclick="finalizarWhatsApp()">
-          <i class="fa-brands fa-whatsapp"></i> Finalizar no WhatsApp
+          <i class="fa-brands fa-whatsapp"></i> Finalizar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: Login -->
-  <div class="modal" id="loginModal">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3><i class="fa-solid fa-lock"></i> Login</h3>
-        <button class="icon-btn" onclick="closeModal('loginModal')" aria-label="Fechar">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <!-- Mensagens (login + sucesso) -->
-        <div class="alert" id="loginMsg" style="display:none;"></div>
-
-        <div class="form-row">
-          <label>Email</label>
-          <input type="email" id="emailInput" placeholder="Digite seu email" />
-        </div>
-
-        <div class="form-row">
-          <label>Senha</label>
-          <input type="password" id="passInput" placeholder="Digite sua senha" />
-        </div>
-
-        <button class="btn primary full" onclick="adminLogin()">Entrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Cloudinary Upload Widget -->
-  <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
-
-  <!-- App -->
+  <!-- APP -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

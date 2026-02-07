@@ -2,92 +2,85 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Alma Bela</title>
 
-  <link rel="stylesheet" href="./styles.css" />
+  <!-- Favicon (opcional) -->
+  <link rel="icon" type="image/png" href="./favicon.png">
 
   <!-- Fonte elegante -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- Ícones -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Ícones profissionais -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- Cloudinary Upload Widget -->
   <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
   <div class="app">
-
     <!-- HEADER -->
-    <header class="topbar">
-      <div class="wrap topbar-inner">
-        <a class="brand" href="#" onclick="showView('colecao', event)">
-          <img src="./logo.png" class="brand-logo" alt="Alma Bela">
+    <header class="header">
+      <div class="wrap header-inner">
+        <a class="brand" href="#colecao" onclick="showView('colecao', event)">
+          <img src="./logo.png" alt="Alma Bela" class="brand-logo" />
           <div class="brand-text">
-            <div class="brand-title">ALMA BELA</div>
+            <div class="brand-name">ALMA BELA</div>
             <div class="brand-sub">CATÁLOGO PREMIUM</div>
           </div>
         </a>
 
-        <nav class="nav" id="navMenu">
-          <button class="nav-link active" onclick="showView('colecao', event)">Coleção</button>
-          <button class="nav-link" onclick="showView('sobre', event)">Sobre</button>
-        </nav>
-
-        <div class="top-actions">
-          <button class="icon-btn" onclick="toggleMenu()" aria-label="Menu">
-            <i class="fa-solid fa-bars"></i>
+        <nav class="nav">
+          <button class="nav-link active" onclick="location.hash='colecao'; showView('colecao', event)">
+            Coleção
+          </button>
+          <button class="nav-link" onclick="location.hash='sobre'; showView('sobre', event)">
+            Sobre
           </button>
 
-          <!-- Aparece só se estiver logado -->
-          <button class="btn-admin" id="adminBtn" style="display:none;" onclick="goAdmin()">
+          <!-- Botão admin aparece apenas quando logado -->
+          <button class="nav-link admin-btn" id="adminBtn" style="display:none" onclick="location.hash='admin'">
             <i class="fa-solid fa-user-shield"></i> Admin
           </button>
+        </nav>
 
-          <button class="pill" onclick="openCart()">
+        <div class="header-actions">
+          <button class="cart-btn" onclick="openCart()">
             <i class="fa-solid fa-bag-shopping"></i>
             <span>Carrinho</span>
             <span class="badge" id="badge">0</span>
           </button>
         </div>
       </div>
-      <link rel="icon" type="image/png" href="./favicon.png">
-
     </header>
 
     <!-- MAIN -->
-    <main class="main">
+    <main>
       <!-- COLEÇÃO -->
       <section id="colecao" class="section active">
         <div class="wrap">
-          <!-- BANNER -->
-<!-- BANNER -->
-<div class="banner">
-  <div class="banner-bg"></div>
-
-  <div class="banner-content">
-    <div class="banner-kicker">ALMA BELA • LINHA PREMIUM</div>
-    <h2 class="banner-title">Catálogo Premium</h2>
-    <p class="banner-text">
-      Elegância, conforto e discrição em cada peça. Escolha seus itens e finalize pelo WhatsApp.
-    </p>
-
-    <div class="banner-actions">
-      <button class="btn primary" onclick="document.getElementById('searchInput').focus()">
-        <i class="fa-solid fa-magnifying-glass"></i> Buscar produtos
-      </button>
-
-      <button class="btn outline" onclick="openCart()">
-        <i class="fa-solid fa-bag-shopping"></i> Ver carrinho
-      </button>
-    </div>
-  </div>
-</div>
-
+          <!-- BANNER do repositório -->
+          <div class="banner">
+            <div class="banner-bg"></div>
+            <div class="banner-content">
+              <div class="banner-kicker">ALMA BELA • LINHA PREMIUM</div>
+              <h2 class="banner-title">Catálogo Premium</h2>
+              <p class="banner-text">Elegância, conforto e discrição em cada peça. Escolha seus itens e finalize pelo WhatsApp.</p>
+              <div class="banner-actions">
+                <button class="btn primary" onclick="document.getElementById('searchInput').focus()">
+                  <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                </button>
+                <button class="btn outline" onclick="openCart()">
+                  <i class="fa-solid fa-bag-shopping"></i> Carrinho
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div class="hero">
             <h1>Catálogo Premium</h1>
@@ -97,18 +90,18 @@
           <div class="filters">
             <div class="search">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input id="searchInput" type="text" placeholder="Buscar produto..." oninput="filtrarProdutos()">
+              <input id="searchInput" type="text" placeholder="Buscar produto..." />
             </div>
 
             <div class="select">
               <i class="fa-solid fa-filter"></i>
-              <select id="catSelect" onchange="filtrarProdutos()">
+              <select id="catSelect">
                 <option value="">Todas as categorias</option>
               </select>
             </div>
           </div>
 
-          <div class="grid" id="grid"></div>
+          <div id="grid" class="grid"></div>
         </div>
       </section>
 
@@ -118,15 +111,11 @@
           <div class="box">
             <h2>Sobre a Alma Bela</h2>
             <p>Catálogo online para facilitar seus pedidos com discrição e praticidade.</p>
-            <p>Escolha os itens e finalize pelo WhatsApp.</p>
-
-            <div class="row">
-              <a id="whatsLink" class="link" href="#" target="_blank" rel="noopener">
-                <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp
-              </a>
-            </div>
-
-            <div class="footnote">© <span id="year"></span> Alma Bela</div>
+            <p>Escolha os itens, adicione ao carrinho e finalize pelo WhatsApp.</p>
+            <p class="muted" style="margin-top:16px;">
+              <i class="fa-solid fa-phone"></i> WhatsApp:
+              <a class="link" href="https://wa.me/5521979405145" target="_blank" rel="noopener">+55 21 97940-5145</a>
+            </p>
           </div>
         </div>
       </section>
@@ -135,225 +124,171 @@
       <section id="admin" class="section">
         <div class="wrap">
           <div class="box">
-            <div class="admin-head">
+            <div class="admin-top">
               <div>
                 <h2>Painel Admin</h2>
-                <p class="muted" id="adminCount">0 itens</p>
+                <p class="muted">Gerencie produtos e imagens.</p>
               </div>
               <div class="admin-actions">
-                <button class="btn outline" onclick="openLogin()">
-                  <i class="fa-solid fa-right-to-bracket"></i> Login
-                </button>
-                <button class="btn outline" onclick="adminSair()">
+                <button class="btn outline" id="logoutBtn" style="display:none" onclick="adminLogout()">
                   <i class="fa-solid fa-right-from-bracket"></i> Sair
                 </button>
               </div>
             </div>
 
+            <!-- Quando NÃO logado -->
             <div id="adminLocked">
-              <p>Faça login para gerenciar produtos.</p>
-              <button class="btn primary" onclick="openLogin()">Entrar</button>
-            </div>
-
-            <div id="adminPanel" style="display:none;">
-              <div class="admin-form">
-                <div class="field">
-                  <label>Nome do produto</label>
-                  <input id="pNome" type="text" placeholder="Ex: Conjunto Renda Luxo">
-                </div>
-
-                <div class="field">
-                  <label>Categoria</label>
-                  <input id="pCategoria" type="text" placeholder="Ex: Lingerie">
-                </div>
-
-                <div class="field">
-                  <label>Preço (R$)</label>
-                  <input id="pPreco" type="number" step="0.01" placeholder="Ex: 99.90">
-                </div>
-
-                <div class="field">
-                  <label>Fotos do produto</label>
-
-                  <div class="admin-photos">
-                    <div class="photo-grid" id="photoGrid">
-                      <div class="photo-empty">Nenhuma foto importada</div>
-                    </div>
-
-                    <div class="actions">
-                      <button class="btn outline" onclick="abrirUploadCloudinary()">
-                        <i class="fa-regular fa-image"></i> Importar fotos
-                      </button>
-                      <button class="btn outline" onclick="limparFotos()">
-                        <i class="fa-solid fa-eraser"></i> Limpar
-                      </button>
-                      <button class="btn primary" onclick="adminAdicionarProduto()">
-                        <i class="fa-solid fa-plus"></i> Salvar produto
-                      </button>
-                    </div>
-
-                    <!-- escondido: aqui ficam as URLs internamente -->
-                    <textarea id="pImagens" style="display:none;"></textarea>
-                  </div>
+              <div class="notice">
+                <i class="fa-solid fa-lock"></i>
+                <div>
+                  <div class="notice-title">Acesso restrito</div>
+                  <div class="notice-text">Entre com seu usuário admin para continuar.</div>
                 </div>
               </div>
-
-              <hr class="hr">
-              <div id="adminList" class="admin-list"></div>
+              <button class="btn primary" onclick="openLogin()">
+                <i class="fa-solid fa-user-lock"></i> Entrar
+              </button>
             </div>
+
+            <!-- Quando logado -->
+            <div id="adminPanel" style="display:none; margin-top:18px;">
+              <div class="admin-grid">
+                <div class="admin-form">
+                  <h3>Novo produto</h3>
+
+                  <label>Nome</label>
+                  <input id="pNome" type="text" placeholder="Ex.: Conjunto Rendado..." />
+
+                  <label>Categoria</label>
+                  <input id="pCategoria" type="text" placeholder="Ex.: Lingerie" />
+
+                  <label>Preço</label>
+                  <input id="pPreco" type="number" step="0.01" placeholder="Ex.: 99.90" />
+
+                  <label>Fotos (Cloudinary)</label>
+                  <div class="row">
+                    <button class="btn outline" type="button" onclick="abrirUploadCloudinary()">
+                      <i class="fa-solid fa-images"></i> Importar fotos
+                    </button>
+                    <button class="btn outline" type="button" onclick="limparFotos()">
+                      <i class="fa-solid fa-trash"></i> Limpar
+                    </button>
+                  </div>
+
+                  <div id="photoGrid" class="photo-grid"></div>
+
+                  <button class="btn primary full" type="button" onclick="adminAdicionarProduto()">
+                    <i class="fa-solid fa-plus"></i> Salvar produto
+                  </button>
+                </div>
+
+                <div class="admin-list">
+                  <div class="admin-list-top">
+                    <h3>Produtos cadastrados</h3>
+                    <span class="chip" id="adminCount">0 itens</span>
+                  </div>
+                  <div id="adminList"></div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
-      <!-- FOOTER -->
-<footer class="footer">
-  <div class="wrap">
-    <div class="footer-top">
-      <div class="footer-col">
-        <div class="footer-title">Redes sociais</div>
-        <div class="footer-icons">
-          <a class="fi" href="#" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-          <a class="fi" href="#" target="_blank" rel="noopener" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-          <a class="fi" href="#" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
-          <a class="fi" href="#" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-        </div>
-        <div class="footer-note">Siga a Alma Bela e acompanhe novidades.</div>
-      </div>
-
-      <div class="footer-col">
-        <div class="footer-title">Formas de pagamento</div>
-        <div class="pay-row">
-          <span class="pay-badge">PIX</span>
-          <span class="pay-badge">VISA</span>
-          <span class="pay-badge">Mastercard</span>
-          <span class="pay-badge">Elo</span>
-          <span class="pay-badge">Amex</span>
-          <span class="pay-badge">Hipercard</span>
-        </div>
-        <div class="footer-note">Pagamento confirmado após aprovação.</div>
-      </div>
-
-      <div class="footer-col">
-        <div class="footer-title">Segurança</div>
-        <div class="secure-row">
-          <span class="secure-badge">
-            <i class="fa-solid fa-lock"></i> Conexão segura (HTTPS)
-          </span>
-          <span class="secure-badge">
-            <i class="fa-solid fa-shield-halved"></i> Dados protegidos
-          </span>
-        </div>
-        <div class="footer-note">Atendimento via WhatsApp.</div>
-      </div>
-
-      <div class="footer-col footer-col-right">
-        <div class="footer-title">SAC</div>
-        <div class="sac-row">
-          <i class="fa-solid fa-headset"></i>
-          <span id="sacPhone">(21) 97940-5145</span>
-        </div>
-        <div class="footer-note">Seg–Sex • 9h–18h (exceto feriados)</div>
-      </div>
-    </div>
-
-    <div class="footer-line"></div>
-
-    <div class="footer-bottom">
-      <div class="footer-legal">
-        <div><strong>Alma Bela</strong> • Catálogo online para pedidos com discrição e praticidade.</div>
-        <div class="footer-mini">
-          Endereço (opcional) • CNPJ (opcional) • Política (opcional)
-        </div>
-      </div>
-
-      <div class="footer-copy">
-        © <span id="footerYear"></span> Alma Bela — Todos os direitos reservados.
-      </div>
-    </div>
-  </div>
-</footer>
     </main>
 
+    <!-- FOOTER simples (se você já tem o seu, pode manter o seu e remover este) -->
+    <footer class="footer-simple">
+      <div class="wrap footer-simple-inner">
+        <div class="muted">© <span id="footerYear"></span> Alma Bela — Todos os direitos reservados.</div>
+      </div>
+    </footer>
   </div>
 
-  <!-- LOGIN MODAL -->
+  <!-- MODAL LOGIN -->
   <div class="modal" id="loginModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="modal-title">Login Admin</div>
-        <button class="close-btn" onclick="closeModal('loginModal')">×</button>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title"><i class="fa-solid fa-user-lock"></i> Login Admin</div>
+        <button class="x" onclick="closeModal('loginModal')">×</button>
       </div>
+
       <div class="modal-body">
-        <div class="msg" id="loginMsg" style="display:none;"></div>
+        <div class="msg" id="loginMsg"></div>
 
-        <div class="field">
+        <form onsubmit="doLogin(event)">
           <label>Email</label>
-          <input id="emailInput" type="email" placeholder="Seu email admin">
-        </div>
+          <input id="emailInput" type="email" required placeholder="seuemail@..." />
 
-        <div class="field">
           <label>Senha</label>
-          <input id="passInput" type="password" placeholder="Sua senha admin">
-        </div>
+          <input id="passInput" type="password" required placeholder="••••••••" />
 
-        <button class="btn primary full" onclick="adminLogin()">Entrar</button>
+          <button class="btn primary full" type="submit">
+            Entrar
+          </button>
+        </form>
       </div>
     </div>
   </div>
 
-  <!-- CART MODAL -->
+  <!-- MODAL CARRINHO -->
   <div class="modal" id="cartModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="modal-title">Seu carrinho</div>
-        <button class="close-btn" onclick="closeModal('cartModal')">×</button>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title"><i class="fa-solid fa-bag-shopping"></i> Seu carrinho</div>
+        <button class="x" onclick="closeModal('cartModal')">×</button>
       </div>
+
       <div class="modal-body">
         <div id="cartList"></div>
       </div>
-      <div class="modal-footer">
+
+      <div class="modal-foot">
         <button class="btn outline" onclick="closeModal('cartModal')">Continuar</button>
-        <button class="btn primary" onclick="finalizarWhatsApp()">Finalizar no WhatsApp</button>
+        <button class="btn primary" onclick="doCheckout()">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
       </div>
     </div>
   </div>
 
   <!-- MODAL PRODUTO -->
   <div class="modal" id="productModal">
-    <div class="modal-content modal-product">
-      <div class="modal-header">
-        <div class="modal-title">Visualização do Produto</div>
-        <button class="close-btn" onclick="closeModal('productModal')">×</button>
+    <div class="modal-card modal-wide">
+      <div class="modal-head">
+        <div class="modal-title">Visualização do produto</div>
+        <button class="x" onclick="closeModal('productModal')">×</button>
       </div>
 
-      <div class="modal-body product-view">
+      <div class="modal-body pv">
         <div class="pv-left">
           <div class="pv-thumbs" id="pvThumbs"></div>
-        </div>
 
-        <div class="pv-main">
           <div class="pv-stage">
-            <img id="pvMainImg" alt="Produto"/>
-
-            <button class="pv-nav pv-prev" onclick="pvPrev()">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button class="pv-nav pv-next" onclick="pvNext()">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
+            <img id="pvMainImg" class="pv-main" src="" alt="">
+            <button class="pv-nav prev" onclick="pvPrev()"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="pv-nav next" onclick="pvNext()"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
         </div>
 
         <div class="pv-right">
-          <div class="pv-title" id="pvTitle">Produto</div>
-          <div class="pv-cat" id="pvCat">Categoria</div>
-          <div class="pv-price" id="pvPrice">R$ 0,00</div>
+          <div class="pv-name" id="pvTitle">Produto</div>
+          <div class="pv-cat" id="pvCat"></div>
+          <div class="pv-price" id="pvPrice"></div>
 
-          <button class="btn primary full" id="pvAddBtn">Adicionar</button>
+          <button class="btn primary full" id="pvAddBtn">
+            <i class="fa-solid fa-plus"></i> Adicionar
+          </button>
+
+          <div class="pv-note muted">
+            Selecione as fotos para ver todos os ângulos.
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- App -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

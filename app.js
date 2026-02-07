@@ -50,6 +50,11 @@ let produtos = [];
 let produtosFiltrados = [];
 let carrinho = JSON.parse(localStorage.getItem("almabela_cart")) || [];
 let adminUser = null;
+// ===== Modal Produto state =====
+
+let pvImages = [];
+let pvIndex = 0;
+let pvProductId = null;
 
 /* ==========================
    HELPERS

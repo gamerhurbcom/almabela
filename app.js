@@ -20,12 +20,12 @@ const CONFIG = {
   WHATSAPP: "5521979405145",
 
   CLOUDINARY: {
-    cloudName: "doi067uao",
-    uploadPreset: "Unsigned"
+    cloudName: "COLOQUE_SEU_CLOUD_NAME_AQUI",
+    uploadPreset: "COLOQUE_SEU_UPLOAD_PRESET_AQUI"
   }
 };
 
-/* Firebase config (o seu) */
+/* Firebase config (seu) */
 const firebaseConfig = {
   apiKey: "AIzaSyAMfepLXbYP5oKIZlJ91vDevfbzHEzmoMk",
   authDomain: "almabela.firebaseapp.com",
@@ -36,9 +36,6 @@ const firebaseConfig = {
   measurementId: "G-2BZDHCSZSQ"
 };
 
-/* ==========================
-   INIT
-========================== */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -50,8 +47,8 @@ let produtos = [];
 let produtosFiltrados = [];
 let carrinho = JSON.parse(localStorage.getItem("almabela_cart")) || [];
 let adminUser = null;
-// ===== Modal Produto state =====
 
+// Modal Produto state
 let pvImages = [];
 let pvIndex = 0;
 let pvProductId = null;
@@ -111,6 +108,10 @@ window.showView = function showView(name, ev) {
 
   if (name === "colecao") renderProdutos();
   if (name === "admin") renderAdmin();
+};
+
+window.goAdmin = function goAdmin() {
+  showView("admin");
 };
 
 /* ==========================
@@ -177,10 +178,9 @@ window.filtrarProdutos = function filtrarProdutos() {
 };
 
 /* ==========================
-   ✅ CARROSSEL (SEU CÓDIGO)
+   CARROSSEL (CARD)
 ========================== */
 function renderCarousel(p) {
-  // Aceita o novo padrão (imagens[]) e o antigo (imagemUrl)
   const imgs =
     Array.isArray(p.imagens) && p.imagens.length
       ? p.imagens
@@ -203,14 +203,14 @@ function renderCarousel(p) {
       </div>
 
       ${imgs.length > 1 ? `
-        <button class="carousel-btn prev" onclick="carouselPrev('${id}')">
+        <button class="carousel-btn prev" onclick="event.stopPropagation(); carouselPrev('${id}')">
           <i class="fa-solid fa-chevron-left"></i>
         </button>
-        <button class="carousel-btn next" onclick="carouselNext('${id}')">
+        <button class="carousel-btn next" onclick="event.stopPropagation(); carouselNext('${id}')">
           <i class="fa-solid fa-chevron-right"></i>
         </button>
 
-        <div class="carousel-dots">
+        <div class="carousel-dots" onclick="event.stopPropagation()">
           ${imgs.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}" onclick="carouselGo('${id}', ${i})"></div>`).join("")}
         </div>
       ` : ""}
@@ -262,28 +262,9 @@ window.carouselGo = function carouselGo(id, index) {
   setCarouselIndex(id, index);
 };
 
-/* swipe mobile */
-document.addEventListener("touchstart", (e) => {
-  const car = e.target.closest?.(".carousel");
-  if (!car) return;
-  car.dataset.touchStartX = String(e.touches[0].clientX);
-}, { passive: true });
-
-document.addEventListener("touchend", (e) => {
-  const car = e.target.closest?.(".carousel");
-  if (!car) return;
-
-  const startX = Number(car.dataset.touchStartX || 0);
-  const endX = Number(e.changedTouches[0].clientX);
-  const diff = endX - startX;
-
-  if (Math.abs(diff) < 40) return;
-  if (diff < 0) window.carouselNext(car.id);
-  else window.carouselPrev(car.id);
-}, { passive: true });
-
 /* ==========================
    RENDER PRODUTOS
+   - Modal só abre ao clicar no card
 ========================== */
 function renderProdutos() {
   const grid = document.getElementById("grid");
@@ -305,14 +286,96 @@ function renderProdutos() {
           <span class="price">R$ ${money(p.preco)}</span>
         </div>
         <div class="title">${escapeHtml(p.nome)}</div>
-        <button class="btn primary full" onclick="addToCart('${p.id}')">
-          Adicionar
-        </button>
+        <button class="btn primary full" onclick="addToCart('${p.id}')">Adicionar</button>
       </div>
     </article>
   `).join("");
 }
 
+/* ==========================
+   MODAL PRODUTO (Nike style)
+========================== */
+window.openProduct = function openProduct(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+
+  pvImages =
+    Array.isArray(p.imagens) && p.imagens.length
+      ? p.imagens
+      : (p.imagemUrl ? [p.imagemUrl] : []);
+
+  pvIndex = 0;
+  pvProductId = p.id;
+
+  document.getElementById("pvTitle").textContent = p.nome || "Produto";
+  document.getElementById("pvCat").textContent = p.categoria || "";
+  document.getElementById("pvPrice").textContent = `R$ ${money(p.preco)}`;
+
+  const btn = document.getElementById("pvAddBtn");
+  btn.onclick = () => {
+    addToCart(pvProductId);
+    closeModal("productModal");
+  };
+
+  renderProductModal();
+  openModal("productModal");
+};
+
+function renderProductModal() {
+  const thumbs = document.getElementById("pvThumbs");
+  const main = document.getElementById("pvMainImg");
+
+  if (!pvImages.length) {
+    thumbs.innerHTML = "";
+    main.src = "";
+    return;
+  }
+
+  main.src = pvImages[pvIndex];
+
+  thumbs.innerHTML = pvImages.map((url, i) => `
+    <div class="pv-thumb ${i === pvIndex ? "active" : ""}" onclick="pvGo(${i})">
+      <img src="${url}" alt="">
+    </div>
+  `).join("");
+}
+
+window.pvGo = function pvGo(i) {
+  pvIndex = i;
+  renderProductModal();
+};
+
+window.pvNext = function pvNext() {
+  if (!pvImages.length) return;
+  pvIndex = (pvIndex + 1) % pvImages.length;
+  renderProductModal();
+};
+
+window.pvPrev = function pvPrev() {
+  if (!pvImages.length) return;
+  pvIndex = (pvIndex - 1 + pvImages.length) % pvImages.length;
+  renderProductModal();
+};
+
+// Swipe no modal (celular)
+document.addEventListener("touchstart", (e) => {
+  const stage = e.target.closest?.(".pv-stage");
+  if (!stage) return;
+  stage.dataset.sx = String(e.touches[0].clientX);
+}, { passive: true });
+
+document.addEventListener("touchend", (e) => {
+  const stage = e.target.closest?.(".pv-stage");
+  if (!stage) return;
+
+  const sx = Number(stage.dataset.sx || 0);
+  const ex = Number(e.changedTouches[0].clientX);
+  const diff = ex - sx;
+
+  if (Math.abs(diff) < 40) return;
+  if (diff < 0) pvNext();
+  else pvPrev();
+}, { passive: true });
 
 /* ==========================
    CART
@@ -327,9 +390,6 @@ function updateBadge() {
   if (badge) badge.textContent = carrinho.reduce((s, x) => s + x.qtd, 0);
 }
 
-/* ==========================
-   ✅ addToCart (SEU CÓDIGO)
-========================== */
 window.addToCart = function addToCart(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
@@ -363,26 +423,24 @@ function renderCart() {
   const total = carrinho.reduce((s, x) => s + (Number(x.preco) * x.qtd), 0);
 
   el.innerHTML = `
-    <div class="cart-list">
-      ${carrinho.map((x, i) => `
-        <div class="cart-row">
-          <img src="${x.imagemUrl}" alt="">
-          <div class="cart-info">
-            <div class="cart-name">${escapeHtml(x.nome)}</div>
-            <div class="cart-sub">R$ ${money(x.preco)}</div>
+    ${carrinho.map((x, i) => `
+      <div class="cart-row">
+        <img src="${x.imagemUrl}" alt="">
+        <div class="cart-info">
+          <div class="cart-name">${escapeHtml(x.nome)}</div>
+          <div class="cart-sub">R$ ${money(x.preco)}</div>
 
-            <div class="cart-actions">
-              <div class="qty">
-                <button onclick="changeQty(${i}, -1)">-</button>
-                <span>${x.qtd}</span>
-                <button onclick="changeQty(${i}, 1)">+</button>
-              </div>
-              <button class="remove" onclick="removeItem(${i})">Remover</button>
+          <div class="cart-actions">
+            <div class="qty">
+              <button onclick="changeQty(${i}, -1)">-</button>
+              <span>${x.qtd}</span>
+              <button onclick="changeQty(${i}, 1)">+</button>
             </div>
+            <button class="remove" onclick="removeItem(${i})">Remover</button>
           </div>
         </div>
-      `).join("")}
-    </div>
+      </div>
+    `).join("")}
 
     <div class="summary">
       <div class="sum-line"><span>Subtotal</span><span>R$ ${money(total)}</span></div>
@@ -434,7 +492,7 @@ window.adminLogin = async function adminLogin() {
     await signInWithEmailAndPassword(auth, email, pass);
     closeModal("loginModal");
     toast("Login realizado com sucesso.");
-    checkAdminHash();
+    showView("admin");
   } catch (e) {
     alert("Credenciais inválidas.");
   }
@@ -443,7 +501,6 @@ window.adminLogin = async function adminLogin() {
 window.adminSair = async function adminSair() {
   await signOut(auth);
   toast("Sessão encerrada.");
-  history.replaceState(null, "", "#");
   showView("colecao");
 };
 
@@ -574,7 +631,7 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
       uploadPreset: CONFIG.CLOUDINARY.uploadPreset,
       sources: ["local", "camera", "url"],
       multiple: true,
-      maxFiles: 8
+      maxFiles: 12
     },
     (error, result) => {
       if (!error && result?.event === "success") {
@@ -592,23 +649,6 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
 };
 
 /* ==========================
-   ADMIN ESCONDIDO (#admin)
-========================== */
-function checkAdminHash() {
-  const hash = (location.hash || "").replace("#", "");
-  if (hash === "admin") {
-    if (!adminUser) {
-      history.replaceState(null, "", "#");
-      showView("colecao");
-      openLogin();
-      return;
-    }
-    showView("admin");
-  }
-}
-window.addEventListener("hashchange", checkAdminHash);
-
-/* ==========================
    INIT
 ========================== */
 function updateWhatsLink() {
@@ -624,98 +664,17 @@ function setYear() {
 
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
+
+  // botão Admin aparece automaticamente quando já estiver logado
+  const adminBtn = document.getElementById("adminBtn");
+  if (adminBtn) adminBtn.style.display = adminUser ? "flex" : "none";
+
   renderAdmin();
-  checkAdminHash();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   setYear();
   updateWhatsLink();
   updateBadge();
-  checkAdminHash();
   listenProdutos();
 });
-// ===== Modal Produto (abre só ao clicar no produto) =====
-window.openProduct = function openProduct(id) {
-  const p = produtos.find(x => x.id === id);
-  if (!p) return;
-
-  // imagens[] (novo) ou imagemUrl (antigo)
-  pvImages =
-    Array.isArray(p.imagens) && p.imagens.length
-      ? p.imagens
-      : (p.imagemUrl ? [p.imagemUrl] : []);
-
-  pvIndex = 0;
-  pvProductId = p.id;
-
-  document.getElementById("pvTitle").textContent = p.nome || "Produto";
-  document.getElementById("pvCat").textContent = p.categoria || "";
-  document.getElementById("pvPrice").textContent = `R$ ${money(p.preco)}`;
-
-  const btn = document.getElementById("pvAddBtn");
-  btn.onclick = () => {
-    addToCart(pvProductId);
-    closeModal("productModal");
-  };
-
-  renderProductModal();
-  openModal("productModal");
-};
-
-function renderProductModal() {
-  const thumbs = document.getElementById("pvThumbs");
-  const main = document.getElementById("pvMainImg");
-
-  if (!pvImages.length) {
-    thumbs.innerHTML = "";
-    main.src = "";
-    return;
-  }
-
-  main.src = pvImages[pvIndex];
-
-  thumbs.innerHTML = pvImages.map((url, i) => `
-    <div class="pv-thumb ${i === pvIndex ? "active" : ""}" onclick="pvGo(${i})">
-      <img src="${url}" alt="">
-    </div>
-  `).join("");
-}
-
-window.pvGo = function pvGo(i) {
-  pvIndex = i;
-  renderProductModal();
-};
-
-window.pvNext = function pvNext() {
-  if (!pvImages.length) return;
-  pvIndex = (pvIndex + 1) % pvImages.length;
-  renderProductModal();
-};
-
-window.pvPrev = function pvPrev() {
-  if (!pvImages.length) return;
-  pvIndex = (pvIndex - 1 + pvImages.length) % pvImages.length;
-  renderProductModal();
-};
-
-// Swipe no modal (celular)
-document.addEventListener("touchstart", (e) => {
-  const stage = e.target.closest?.(".pv-stage");
-  if (!stage) return;
-  stage.dataset.sx = String(e.touches[0].clientX);
-}, { passive: true });
-
-document.addEventListener("touchend", (e) => {
-  const stage = e.target.closest?.(".pv-stage");
-  if (!stage) return;
-
-  const sx = Number(stage.dataset.sx || 0);
-  const ex = Number(e.changedTouches[0].clientX);
-  const diff = ex - sx;
-
-  if (Math.abs(diff) < 40) return;
-  if (diff < 0) pvNext();
-  else pvPrev();
-}, { passive: true });
-

@@ -1,3 +1,8 @@
+Não! 😅 Está TUDO JUNTO em um arquivo HTML. Deixa eu separar nos 4 arquivos que você pediu + logo PNG!
+
+📁 4 Arquivos Separados:
+1️⃣ index.html
+2️⃣ styles.css
 * {
     margin: 0;
     padding: 0;
@@ -68,8 +73,9 @@ header {
     opacity: 0.8;
 }
 
-.logo-emoji {
-    font-size: 32px;
+.logo-img {
+    height: 40px;
+    width: auto;
 }
 
 .logo-text h1 {

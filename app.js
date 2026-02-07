@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 /* ==========================
-   CONFIG (TROQUE O CLOUDINARY)
+   CONFIG
 ========================== */
 const CONFIG = {
   NOME_LOJA: "ALMA BELA",
@@ -42,8 +42,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const productsRef = collection(db, "products");
-
 /* ==========================
    STATE
 ========================== */
@@ -67,16 +65,16 @@ function money(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
 }
-
-/* Mensagens (usa a caixa loginMsg) */
 function toast(texto, isError = false) {
   const box = document.getElementById("loginMsg");
   if (!box) return;
+
   box.textContent = texto;
   box.style.display = "block";
   box.style.borderColor = isError ? "rgba(226,74,59,.35)" : "rgba(60,170,90,.35)";
   box.style.background = isError ? "rgba(226,74,59,.10)" : "rgba(60,170,90,.10)";
   box.style.color = isError ? "#7a1f1b" : "#145a2a";
+
   setTimeout(() => (box.style.display = "none"), 2200);
 }
 
@@ -126,7 +124,8 @@ document.addEventListener("click", (e) => {
    PRODUCTS (FIRESTORE)
 ========================== */
 function listenProdutos() {
-  const q = query(productsRef, orderBy("criadoEm", "desc"));
+  const q = query(collection(db, "products"), orderBy("criadoEm", "desc"));
+
   onSnapshot(q, (snap) => {
     produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     produtosFiltrados = [...produtos];
@@ -165,6 +164,110 @@ window.filtrarProdutos = function filtrarProdutos() {
   renderProdutos();
 };
 
+/* ==========================
+   CARROSSEL
+========================== */
+function renderCarousel(p) {
+  const imgs = Array.isArray(p.imagens) && p.imagens.length ? p.imagens : [];
+
+  if (!imgs.length) {
+    return `<div class="carousel"><div style="padding:16px;color:#777;">Sem imagem</div></div>`;
+  }
+
+  const id = `c_${p.id}`;
+
+  return `
+    <div class="carousel" id="${id}">
+      <div class="carousel-track" style="transform:translateX(0%);">
+        ${imgs.map(url => `<img class="carousel-img" src="${url}" alt="">`).join("")}
+      </div>
+
+      ${imgs.length > 1 ? `
+        <button class="carousel-btn prev" onclick="carouselPrev('${id}')">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button class="carousel-btn next" onclick="carouselNext('${id}')">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <div class="carousel-dots">
+          ${imgs.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}" onclick="carouselGo('${id}', ${i})"></div>`).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function getCarouselState(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+
+  const track = el.querySelector(".carousel-track");
+  const imgs = el.querySelectorAll(".carousel-img");
+  const dots = el.querySelectorAll(".dot");
+
+  return { el, track, imgs, dots };
+}
+
+function setCarouselIndex(id, index) {
+  const st = getCarouselState(id);
+  if (!st) return;
+
+  const total = st.imgs.length;
+  if (!total) return;
+
+  let i = index;
+  if (i < 0) i = total - 1;
+  if (i >= total) i = 0;
+
+  st.track.style.transform = `translateX(-${i * 100}%)`;
+
+  st.dots.forEach((d, idx) => {
+    d.classList.toggle("active", idx === i);
+  });
+
+  st.el.dataset.index = String(i);
+}
+
+window.carouselNext = function carouselNext(id) {
+  const st = getCarouselState(id);
+  const idx = Number(st?.el?.dataset?.index || 0);
+  setCarouselIndex(id, idx + 1);
+};
+
+window.carouselPrev = function carouselPrev(id) {
+  const st = getCarouselState(id);
+  const idx = Number(st?.el?.dataset?.index || 0);
+  setCarouselIndex(id, idx - 1);
+};
+
+window.carouselGo = function carouselGo(id, index) {
+  setCarouselIndex(id, index);
+};
+
+document.addEventListener("touchstart", (e) => {
+  const car = e.target.closest?.(".carousel");
+  if (!car) return;
+  car.dataset.touchStartX = String(e.touches[0].clientX);
+}, { passive: true });
+
+document.addEventListener("touchend", (e) => {
+  const car = e.target.closest?.(".carousel");
+  if (!car) return;
+
+  const startX = Number(car.dataset.touchStartX || 0);
+  const endX = Number(e.changedTouches[0].clientX);
+  const diff = endX - startX;
+
+  if (Math.abs(diff) < 40) return;
+
+  if (diff < 0) carouselNext(car.id);
+  else carouselPrev(car.id);
+}, { passive: true });
+
+/* ==========================
+   RENDER PRODUTOS
+========================== */
 function renderProdutos() {
   const grid = document.getElementById("grid");
   if (!grid) return;
@@ -172,13 +275,13 @@ function renderProdutos() {
   const list = produtosFiltrados;
 
   if (!list.length) {
-    grid.innerHTML = `<div class="card"><p>Nenhum produto encontrado.</p></div>`;
+    grid.innerHTML = `<div class="box"><p>Nenhum produto encontrado.</p></div>`;
     return;
   }
 
   grid.innerHTML = list.map(p => `
     <article class="product">
-      <img class="product-img" src="${p.imagemUrl}" alt="${escapeHtml(p.nome)}">
+      ${renderCarousel(p)}
       <div class="product-body">
         <div class="product-meta">
           <span class="tag">${escapeHtml(p.categoria || "Lingerie")}</span>
@@ -210,12 +313,14 @@ window.addToCart = function addToCart(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
 
+  const imgPrincipal = (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] : "";
+
   const item = carrinho.find(x => x.id === id);
   if (item) item.qtd += 1;
-  else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco), imagemUrl: p.imagemUrl, qtd: 1 });
+  else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco), imagemUrl: imgPrincipal, qtd: 1 });
 
   saveCart();
-  window.openCart();
+  openCart();
 };
 
 window.openCart = function openCart() {
@@ -292,11 +397,9 @@ window.finalizarWhatsApp = function finalizarWhatsApp() {
 };
 
 /* ==========================
-   ADMIN (AUTH)
+   ADMIN
 ========================== */
 window.openLogin = function openLogin() {
-  const box = document.getElementById("loginMsg");
-  if (box) box.style.display = "none";
   openModal("loginModal");
 };
 
@@ -308,17 +411,15 @@ window.adminLogin = async function adminLogin() {
     await signInWithEmailAndPassword(auth, email, pass);
     closeModal("loginModal");
     toast("Login realizado com sucesso.");
-    // se estiver tentando acessar admin, abre o painel
     checkAdminHash();
   } catch (e) {
-    toast("Credenciais inválidas.", true);
+    alert("Credenciais inválidas.");
   }
 };
 
 window.adminSair = async function adminSair() {
   await signOut(auth);
   toast("Sessão encerrada.");
-  // volta pra coleção e remove #admin se existir
   history.replaceState(null, "", "#");
   showView("colecao");
 };
@@ -342,18 +443,30 @@ function renderAdmin() {
 
   if (count) count.textContent = `${produtos.length} itens`;
 
-  list.innerHTML = produtos.map(p => `
-    <div class="admin-item">
-      <div>
-        <strong>${escapeHtml(p.nome)}</strong><br>
-        <small>${escapeHtml(p.categoria || "Lingerie")} · R$ ${money(p.preco)}</small>
+  list.innerHTML = produtos.map(p => {
+    const imgPrincipal = (Array.isArray(p.imagens) && p.imagens[0]) ? p.imagens[0] : "";
+    return `
+      <div class="admin-item">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <img src="${imgPrincipal}" style="width:54px;height:54px;border-radius:16px;object-fit:cover;border:1px solid rgba(0,0,0,.08);" />
+          <div>
+            <strong>${escapeHtml(p.nome)}</strong><br>
+            <small>${escapeHtml(p.categoria || "Lingerie")} · R$ ${money(p.preco)}</small>
+          </div>
+        </div>
+        <button class="btn outline" onclick="adminExcluirProduto('${p.id}')">
+          <i class="fa-solid fa-trash"></i> Excluir
+        </button>
       </div>
-      <button class="btn outline" onclick="adminExcluirProduto('${p.id}')">
-        <i class="fa-solid fa-trash"></i> Excluir
-      </button>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
+
+window.limparFotos = function limparFotos() {
+  const t = document.getElementById("pImagens");
+  if (t) t.value = "";
+  toast("Fotos limpas.");
+};
 
 window.adminAdicionarProduto = async function adminAdicionarProduto() {
   if (!adminUser) {
@@ -365,10 +478,15 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
   const nome = (document.getElementById("pNome")?.value || "").trim();
   const categoria = (document.getElementById("pCategoria")?.value || "").trim() || "Lingerie";
   const preco = Number(document.getElementById("pPreco")?.value);
-  const imagemUrl = (document.getElementById("pImagem")?.value || "").trim();
 
-  if (!nome || !imagemUrl || !Number.isFinite(preco) || preco <= 0) {
-    toast("Preencha nome, categoria, preço e imagem.", true);
+  const imagensRaw = (document.getElementById("pImagens")?.value || "").trim();
+  const imagens = imagensRaw
+    .split("\n")
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  if (!nome || !imagens.length || !Number.isFinite(preco) || preco <= 0) {
+    toast("Preencha nome, preço e importe pelo menos 1 foto.", true);
     return;
   }
 
@@ -377,17 +495,17 @@ window.adminAdicionarProduto = async function adminAdicionarProduto() {
       nome,
       categoria,
       preco,
-      imagemUrl,
+      imagens,
       criadoEm: serverTimestamp()
     });
 
     document.getElementById("pNome").value = "";
     document.getElementById("pCategoria").value = "";
     document.getElementById("pPreco").value = "";
-    document.getElementById("pImagem").value = "";
+    document.getElementById("pImagens").value = "";
 
     toast("Produto cadastrado com sucesso.");
-    showView("admin"); // mantém no painel
+    showView("admin");
   } catch (e) {
     toast("Permissão insuficiente no Firestore (Rules).", true);
   }
@@ -400,6 +518,9 @@ window.adminExcluirProduto = async function adminExcluirProduto(id) {
     return;
   }
 
+  const ok = confirm("Deseja excluir este produto?");
+  if (!ok) return;
+
   try {
     await deleteDoc(doc(db, "products", id));
     toast("Produto excluído com sucesso.");
@@ -409,7 +530,7 @@ window.adminExcluirProduto = async function adminExcluirProduto(id) {
 };
 
 /* ==========================
-   CLOUDINARY (UPLOAD GALERIA)
+   CLOUDINARY (UPLOAD VÁRIAS FOTOS)
 ========================== */
 window.abrirUploadCloudinary = function abrirUploadCloudinary() {
   if (!adminUser) {
@@ -429,14 +550,17 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
       cloudName: CONFIG.CLOUDINARY.cloudName,
       uploadPreset: CONFIG.CLOUDINARY.uploadPreset,
       sources: ["local", "camera", "url"],
-      multiple: false
+      multiple: true,
+      maxFiles: 8
     },
     (error, result) => {
       if (!error && result?.event === "success") {
         const url = result.info.secure_url;
-        const input = document.getElementById("pImagem");
-        if (input) input.value = url;
-        toast("Imagem enviada com sucesso.");
+        const t = document.getElementById("pImagens");
+        if (t) {
+          const atual = (t.value || "").trim();
+          t.value = atual ? `${atual}\n${url}` : url;
+        }
       }
     }
   );
@@ -445,17 +569,16 @@ window.abrirUploadCloudinary = function abrirUploadCloudinary() {
 };
 
 /* ==========================
-   ADMIN ESCONDIDO / BLOQUEADO
+   ADMIN ESCONDIDO
 ========================== */
 function checkAdminHash() {
   const hash = (location.hash || "").replace("#", "");
 
   if (hash === "admin") {
     if (!adminUser) {
-      // tira o #admin e manda pra coleção
       history.replaceState(null, "", "#");
       showView("colecao");
-      openLogin(); // abre login automaticamente
+      openLogin();
       return;
     }
     showView("admin");
@@ -464,14 +587,13 @@ function checkAdminHash() {
 window.addEventListener("hashchange", checkAdminHash);
 
 /* ==========================
-   CONTACT + INIT
+   INIT
 ========================== */
 function updateWhatsLink() {
   const el = document.getElementById("whatsLink");
   if (!el) return;
   el.href = `https://wa.me/${CONFIG.WHATSAPP}`;
 }
-
 function setYear() {
   const y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();
@@ -480,7 +602,7 @@ function setYear() {
 onAuthStateChanged(auth, (user) => {
   adminUser = user || null;
   renderAdmin();
-  checkAdminHash(); // se estiver logado e for #admin, libera
+  checkAdminHash();
 });
 
 document.addEventListener("DOMContentLoaded", () => {

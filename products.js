@@ -1,23 +1,23 @@
-const DEFAULT_PRODUCTS = [
+window.DEFAULT_PRODUCTS = [
   {
     id: 1,
-    name: "Rose Lace Set",
-    category: "Lingerie",
-    price: 89.90,
-    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
+    nome: "Conjunto Renda Rosé",
+    categoria: "Lingerie",
+    preco: 89.90,
+    imagemUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
   },
   {
     id: 2,
-    name: "Nude Lace Bodysuit",
-    category: "Lingerie",
-    price: 99.90,
-    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
+    nome: "Body em Renda Nude",
+    categoria: "Lingerie",
+    preco: 99.90,
+    imagemUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
   },
   {
     id: 3,
-    name: "Comfort Bra Beige",
-    category: "Bra",
-    price: 49.90,
-    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
+    nome: "Sutiã Conforto Bege",
+    categoria: "Sutiã",
+    preco: 49.90,
+    imagemUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
   }
 ];

@@ -1,378 +1,172 @@
-let loginAttempts = 0;
-let lockoutTime = null;
-let sessionTimer = null;
+let cart = JSON.parse(localStorage.getItem(CONFIG.cartStorageKey)) || [];
 
-let currentUser = localStorage.getItem('adminUser');
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let editingProductId = null;
-let currentImageUrl = '';
+// VIEW
+function showView(name, ev) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById(name).classList.add("active");
 
-function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-
-    if (sectionId === 'admin' && !currentUser) {
-        openLoginModal();
-        showSection('colecao');
-    }
+  document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+  if (ev && ev.target) ev.target.classList.add("active");
 }
 
-function login(event) {
-    event.preventDefault();
+// RENDER PRODUCTS
+function renderProducts() {
+  const grid = document.getElementById("grid");
 
-    if (lockoutTime && Date.now() - lockoutTime < SECURITY_CONFIG.lockoutDuration) {
-        const remainingTime = Math.ceil((SECURITY_CONFIG.lockoutDuration - (Date.now() - lockoutTime)) / 1000);
-        showLoginMessage(`❌ Muitas tentativas! Tente novamente em ${remainingTime}s`, 'error');
-        return;
-    }
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card">
+      <img src="${p.img}" alt="${p.name}" class="product-image">
+      <div class="product-info">
+        <div class="product-tag">${p.cat}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">R$ ${p.price.toFixed(2)}</div>
 
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+        <div class="size-row">
+          <select id="size-${p.id}">
+            ${CONFIG.sizes.map(s => `<option value="${s}">${s}</option>`).join("")}
+          </select>
+        </div>
 
-    const enteredPasswordHash = CryptoJS.SHA256(password).toString();
-
-    if (email === ADMIN_EMAIL && enteredPasswordHash === CORRECT_PASSWORD_HASH) {
-        loginAttempts = 0;
-        lockoutTime = null;
-
-        const sessionToken = CryptoJS.lib.WordArray.random(32).toString();
-        localStorage.setItem('adminUser', email);
-        localStorage.setItem('sessionToken', sessionToken);
-        localStorage.setItem('sessionStart', Date.now());
-
-        currentUser = email;
-        closeLoginModal();
-        startSessionTimer();
-        showLoginMessage('✅ Login realizado com sucesso!', 'success');
-
-        setTimeout(() => {
-            showSection('admin');
-            loadAdminProducts();
-        }, 1000);
-    } else {
-        loginAttempts++;
-        if (loginAttempts >= SECURITY_CONFIG.maxLoginAttempts) {
-            lockoutTime = Date.now();
-            showLoginMessage('❌ Muitas tentativas! Bloqueado por 15 minutos', 'error');
-        } else {
-            showLoginMessage(`❌ Email ou senha incorretos (${loginAttempts}/${SECURITY_CONFIG.maxLoginAttempts})`, 'error');
-        }
-    }
+        <button class="btn-add" onclick="addCart(${p.id})">+ Adicionar</button>
+      </div>
+    </div>
+  `).join("");
 }
 
-function showLoginMessage(text, type) {
-    const msg = document.getElementById('loginMessage');
-    msg.innerHTML = `<div class="message ${type}">${text}</div>`;
-    setTimeout(() => msg.innerHTML = '', 5000);
+// CART
+function addCart(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  const size = document.getElementById(`size-${id}`).value;
+
+  const item = cart.find(x => x.id === id && x.size === size);
+
+  if (item) item.qty++;
+  else cart.push({ id: p.id, name: p.name, price: p.price, img: p.img, size, qty: 1 });
+
+  saveCart();
+  openCart();
 }
 
-function startSessionTimer() {
-    clearTimeout(sessionTimer);
-    sessionTimer = setTimeout(() => {
-        logout();
-        showSection('colecao');
-        showMessage('🔒 Sua sessão expirou por inatividade', 'warning');
-    }, SECURITY_CONFIG.sessionTimeout);
+function updateQty(idx, change) {
+  cart[idx].qty += change;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  saveCart();
+  renderCart();
 }
 
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('adminUser');
-    localStorage.removeItem('sessionToken');
-    localStorage.removeItem('sessionStart');
-    clearTimeout(sessionTimer);
-    showSection('colecao');
+function removeCart(idx) {
+  cart.splice(idx, 1);
+  saveCart();
+  renderCart();
 }
 
-function openLoginModal() {
-    document.getElementById('loginModal').classList.add('active');
-}
+function renderCart() {
+  const list = document.getElementById("cartList");
 
-function closeLoginModal() {
-    document.getElementById('loginModal').classList.remove('active');
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-}
-
-function openProductModal() {
-    if (!currentUser) {
-        openLoginModal();
-        return;
-    }
-    editingProductId = null;
-    currentImageUrl = '';
-    document.getElementById('productName').value = '';
-    document.getElementById('productCategory').value = '';
-    document.getElementById('productPrice').value = '';
-    document.getElementById('productColors').value = '';
-    document.getElementById('imagePreview').style.display = 'none';
-    document.getElementById('imagePreview').classList.remove('active');
-    document.getElementById('productModalTitle').textContent = 'Novo Produto';
-    document.getElementById('productModal').classList.add('active');
-}
-
-function closeProductModal() {
-    document.getElementById('productModal').classList.remove('active');
-}
-
-function openCartModal() {
-    updateCartUI();
-    document.getElementById('cartModal').classList.add('active');
-}
-
-function closeCartModal() {
-    document.getElementById('cartModal').classList.remove('active');
-}
-
-function handleImageSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-        showMessage('❌ Selecione uma imagem válida', 'error');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        currentImageUrl = e.target.result;
-        const preview = document.getElementById('imagePreview');
-        preview.src = currentImageUrl;
-        preview.style.display = 'block';
-        preview.classList.add('active');
-        document.getElementById('productImage').value = currentImageUrl;
-    };
-    reader.readAsDataURL(file);
-}
-
-async function loadAdminProducts() {
-    const adminContent = document.getElementById('adminContent');
-    const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
-
-    if (products.length === 0) {
-        adminContent.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nenhum produto cadastrado</p>';
-        return;
-    }
-
-    adminContent.innerHTML = `
-        <table class="products-table">
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Categoria</th>
-                    <th>Preço</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${products.map(p => `
-                    <tr>
-                        <td>${p.name}</td>
-                        <td>${p.category}</td>
-                        <td>R$ ${parseFloat(p.price).toFixed(2)}</td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn-sm btn-edit" onclick="editProduct(${p.id})">Editar</button>
-                                <button class="btn-sm btn-delete" onclick="deleteProduct(${p.id})">Deletar</button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+  if (cart.length === 0) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🛒</div>
+        <p>Carrinho vazio</p>
+      </div>
     `;
-}
+    return;
+  }
 
-async function saveProduct(event) {
-    event.preventDefault();
+  const total = cart.reduce((s, x) => s + (x.price * x.qty), 0);
 
-    if (!currentImageUrl) {
-        showMessage('❌ Selecione uma imagem', 'error');
-        return;
-    }
-
-    const productData = {
-        id: editingProductId || Date.now(),
-        name: document.getElementById('productName').value,
-        category: document.getElementById('productCategory').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        image_url: currentImageUrl,
-        colors: document.getElementById('productColors').value.split(',').map(c => c.trim())
-    };
-
-    let products = JSON.parse(localStorage.getItem('almabela_products')) || [];
-
-    if (editingProductId) {
-        products = products.map(p => p.id === editingProductId ? productData : p);
-        showMessage('✅ Produto atualizado!', 'success');
-    } else {
-        products.push(productData);
-        showMessage('✅ Produto criado!', 'success');
-    }
-
-    localStorage.setItem('almabela_products', JSON.stringify(products));
-    closeProductModal();
-    loadAdminProducts();
-    loadProducts();
-}
-
-function editProduct(id) {
-    const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
-    const product = products.find(p => p.id === id);
-
-    if (!product) return;
-
-    editingProductId = id;
-    currentImageUrl = product.image_url;
-    document.getElementById('productName').value = product.name;
-    document.getElementById('productCategory').value = product.category;
-    document.getElementById('productPrice').value = product.price;
-    document.getElementById('productColors').value = product.colors.join(', ');
-
-    const preview = document.getElementById('imagePreview');
-    preview.src = product.image_url;
-    preview.style.display = 'block';
-    preview.classList.add('active');
-
-    document.getElementById('productModalTitle').textContent = 'Editar Produto';
-    document.getElementById('productModal').classList.add('active');
-}
-
-function deleteProduct(id) {
-    if (!confirm('Tem certeza que deseja deletar?')) return;
-
-    let products = JSON.parse(localStorage.getItem('almabela_products')) || [];
-    products = products.filter(p => p.id !== id);
-    localStorage.setItem('almabela_products', JSON.stringify(products));
-
-    showMessage('✅ Produto deletado!', 'success');
-    loadAdminProducts();
-    loadProducts();
-}
-
-function showMessage(text, type) {
-    const msg = document.getElementById('adminMessage');
-    if (!msg) return;
-    msg.innerHTML = `<div class="message ${type}">${text}</div>`;
-    setTimeout(() => msg.innerHTML = '', 4000);
-}
-
-async function loadProducts() {
-    const products = JSON.parse(localStorage.getItem('almabela_products')) || [];
-    const grid = document.getElementById('productsGrid');
-
-    if (products.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-gray); padding: 40px;">Nenhum produto</p>';
-        return;
-    }
-
-    grid.innerHTML = products.map(product => `
-        <div class="product-card">
-            <div class="product-image-wrapper">
-                <img src="${product.image_url}" alt="${product.name}" class="product-image">
-            </div>
-            <div class="product-info">
-                <div class="product-category">${product.category}</div>
-                <div class="product-name">${product.name}</div>
-                <div class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</div>
-                <button class="add-to-cart" onclick="addToCart(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url.replace(/'/g, "\\'").replace(/"/g, '\\"')}')">
-                    Adicionar
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function addToCart(id, name, price, image) {
-    const item = cart.find(i => i.id === id);
-    if (item) {
-        item.quantity += 1;
-    } else {
-        cart.push({ id, name, price, image, quantity: 1 });
-    }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    showMessage('✅ Adicionado ao carrinho!', 'success');
-}
-
-function updateCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count;
-}
-
-function updateCartUI() {
-    const list = document.getElementById('cartItemsList');
-
-    if (cart.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Carrinho vazio</p>';
-        document.getElementById('cartTotal').textContent = 'R$ 0,00';
-        return;
-    }
-
-    list.innerHTML = cart.map((item, idx) => `
+  list.innerHTML = `
+    <div class="cart-items">
+      ${cart.map((x, i) => `
         <div class="cart-item">
-            <img src="${item.image}" alt="${item.name}" class="cart-item-image">
-            <div class="cart-item-details">
-                <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">R$ ${item.price.toFixed(2)} x${item.quantity}</div>
-                <button class="btn btn-secondary btn-sm" onclick="removeFromCart(${idx})">Remover</button>
+          <img src="${x.img}" class="cart-img" alt="">
+          <div class="cart-details">
+            <div class="cart-name">${x.name}</div>
+            <div class="cart-meta">Tamanho: ${x.size}</div>
+            <div class="cart-price">R$ ${x.price.toFixed(2)}</div>
+
+            <div class="qty-control">
+              <button class="qty-btn" onclick="updateQty(${i}, -1)">−</button>
+              <span class="qty-val">${x.qty}</span>
+              <button class="qty-btn" onclick="updateQty(${i}, 1)">+</button>
+              <button class="remove-btn" onclick="removeCart(${i})">Remover</button>
             </div>
+          </div>
         </div>
-    `).join('');
+      `).join("")}
+    </div>
 
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    document.getElementById('cartTotal').textContent = `R$ ${total.toFixed(2)}`;
+    <div class="cart-summary">
+      <div class="summary-line">
+        <span>Subtotal:</span>
+        <span class="summary-val">R$ ${total.toFixed(2)}</span>
+      </div>
+
+      <div class="summary-line">
+        <span>Frete:</span>
+        <span class="summary-val">A combinar</span>
+      </div>
+
+      <div class="summary-line total">
+        <span>Total:</span>
+        <span class="summary-val">R$ ${total.toFixed(2)}</span>
+      </div>
+    </div>
+  `;
 }
 
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    updateCartUI();
+function openCart() {
+  renderCart();
+  document.getElementById("cartModal").classList.add("active");
 }
 
-function checkout() {
-    if (cart.length === 0) {
-        showMessage('Carrinho vazio!', 'error');
-        return;
-    }
+function doCheckout() {
+  if (cart.length === 0) return;
 
-    let message = '🛍️ Novo Pedido - Alma Bela\n\n';
-    message += 'Produtos:\n';
-    cart.forEach((item, i) => {
-        message += `${i + 1}. ${item.name}\n`;
-        message += `   R$ ${item.price.toFixed(2)} x ${item.quantity}\n`;
-    });
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    message += `\nTotal: R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
+  let msg = `🛍️ *Pedido - ${CONFIG.storeName}*\n\n`;
 
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+  cart.forEach((x, i) => {
+    msg += `${i+1}. ${x.name}\n`;
+    msg += `Tamanho: ${x.size}\n`;
+    msg += `R$ ${x.price.toFixed(2)} × ${x.qty} = R$ ${(x.price * x.qty).toFixed(2)}\n\n`;
+  });
 
-    cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    updateCartUI();
-    closeCartModal();
+  const total = cart.reduce((s, x) => s + (x.price * x.qty), 0);
+  msg += `💰 *Total:* R$ ${total.toFixed(2)}\n\n✨ Obrigado!`;
+
+  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+
+  cart = [];
+  saveCart();
+  closeModal("cartModal");
 }
 
-function toggleMenu() {
-    const nav = document.getElementById('navMenu');
-    nav.classList.toggle('active');
+// UTILS
+function saveCart() {
+  localStorage.setItem(CONFIG.cartStorageKey, JSON.stringify(cart));
+  updateBadge();
 }
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        document.getElementById('cartModal').classList.remove('active');
-        document.getElementById('productModal').classList.remove('active');
-        document.getElementById('loginModal').classList.remove('active');
-    }
+function updateBadge() {
+  document.getElementById("badge").textContent = cart.reduce((s, x) => s + x.qty, 0);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove("active");
+}
+
+// CLICK FORA FECHA MODAL
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("modal")) e.target.classList.remove("active");
 });
 
-document.addEventListener('click', (e) => {
-    if (e.target.id === 'cartModal') closeCartModal();
-    if (e.target.id === 'productModal') closeProductModal();
-    if (e.target.id === 'loginModal') closeLoginModal();
-});
+// INIT
+renderProducts();
+updateBadge();
 
-loadProducts();
-updateCartCount();
+// link WhatsApp na aba sobre
+const whatsLink = document.getElementById("whatsLink");
+if (whatsLink) {
+  whatsLink.href = `https://wa.me/${CONFIG.whatsapp}`;
+  whatsLink.innerText = `+${CONFIG.whatsapp}`;
+}
